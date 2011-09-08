@@ -1,0 +1,8 @@
+/NeXT.db
+/NeXT.egg-info/*
+/bin/*
+/build/*
+/dist/*
+/lib/*
+/include/*
+*.pyc
