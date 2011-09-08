@@ -10,9 +10,14 @@
     ${self.header()}
   </head>
   <body>
+
      <div class="container">
-       <h1>Modi Labs Spatial planner</h1>
+
+       <h1>Modi Labs Spatial Planner</h1>
+       <hr />
        ${self.body()}
+
      </div>
+
   </body>
 </html>

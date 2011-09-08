@@ -6,8 +6,8 @@ from next.models import initialize_sql
 def main(global_config, **settings):
     """ This function returns a Pyramid WSGI application.
     """
-    engine = engine_from_config(settings, 'sqlalchemy.')
 
+    engine = engine_from_config(settings, 'sqlalchemy.')
     initialize_sql(engine)
 
     config = Configurator(settings=settings)
@@ -15,6 +15,7 @@ def main(global_config, **settings):
     config.add_static_view('static', 'next:static')
 
     config.add_route('index', '/')
+    config.add_route('add-region', '/add-region')
 
     config.scan()
 

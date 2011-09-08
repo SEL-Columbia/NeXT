@@ -63,8 +63,8 @@ class Node(Base):
     id = Column(Integer, primary_key=True)
     point = GeometryColumn(Point(2))
     weight = Column(Integer)
-    node_type_id = Column(Integer, ForeignKey('nodetypes.id'))
 
+    node_type_id = Column(Integer, ForeignKey('nodetypes.id'))
     node_type = relationship(
         NodeType,
         primaryjoin=node_type_id == NodeType.id

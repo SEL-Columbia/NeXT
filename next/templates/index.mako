@@ -6,7 +6,8 @@
 
 <%def name="body()">
 
-<a href="">Add a new region</a>
-<a href=""></a>
+<a class="btn" href="/add-region">Add a new region</a>
+
+<a class="btn" href="/upload-nodes">Upload new csv file</a>
 
 </%def>
