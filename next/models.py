@@ -35,6 +35,9 @@ class Region(Base):
     def __init__(self, name):
         self.name = name
 
+    def __repr__(self):
+        return '#<Region %s>' % self.name
+
 
 class NodeType(Base):
     """
@@ -47,6 +50,9 @@ class NodeType(Base):
 
     def __init__(self, name):
         self.name = name
+
+    def __repr__(self):
+        return '#<NodeType %s>' % self.name
 
 
 class Node(Base):
@@ -76,6 +82,9 @@ class Node(Base):
         self.node_type = node_type
         self.region = region
 
+    def __repr__(self):
+        return '#<Node %s>' % self.id
+
 
 class Edge(Base):
     """
@@ -103,6 +112,9 @@ class Edge(Base):
         self.from_node = from_node
         self.to_node = to_node
         self.weight = weight
+
+    def __repr__(self):
+        return '#<Edge %s>' % self.id
 
 GeometryDDL(Node.__table__)
 
