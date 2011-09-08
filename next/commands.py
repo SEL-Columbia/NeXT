@@ -1,10 +1,10 @@
-import csv
+
 import logging
 from paste.script.command import Command
 from pyramid.paster import bootstrap
 from sqlalchemy import engine_from_config
 from next.models import initialize_sql
-from geoalchemy import functions
+
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +19,7 @@ handler.setFormatter(formatter)
 
 logger.addHandler(handler)
 
-geom_types = ('POINT', 'GEOMETRY')
+geom_types = ('POINT', 'GEOMETRY',)
 fix_folder = 'fixtures'
 
 
@@ -45,8 +45,9 @@ class ImportFixtures(Command):
             logger.info('Loading data for %s' % table_name)
             for obj in yaml_data:
                 # sanity check before we import the data
-                assert len(obj) == len(table.c.keys())
-                table.insert(obj.values()).execute()
+                assert len(obj.keys()) == len(table.c.keys())
+                print obj
+                #table.insert(obj.values()).execute()
 
 
 class ExportFixtures(Command):
