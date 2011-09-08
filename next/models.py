@@ -1,4 +1,8 @@
 """
+Models for Next project.
+
+Ivan Willig, Chris Natali
+
 """
 import transaction
 
@@ -61,7 +65,11 @@ class Node(Base):
     __tablename__ = 'nodes'
 
     id = Column(Integer, primary_key=True)
-    point = GeometryColumn(Point(2))
+
+    point = GeometryColumn(
+        Point(dimension=2, srid=4326, spatial_index=True)
+        )
+
     weight = Column(Integer)
 
     node_type_id = Column(Integer, ForeignKey('nodetypes.id'))

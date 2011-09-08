@@ -9,6 +9,8 @@ CHANGES = open(os.path.join(here, 'CHANGES.txt')).read()
 
 requires = [
     'pyramid',
+    'pyyaml',
+    'Shapely',
     'geoalchemy',
     'colander',
     'deform',
@@ -42,6 +44,11 @@ setup(name='NeXT',
       test_suite='next',
       install_requires = requires,
       entry_points = """\
+      [paste.paster_command]
+
+      export-fixtures = next.commands:ExportFixtures
+      import-fixtures = next.commands:ImportFixtures
+
       [paste.app_factory]
       main = next:main
       """,
