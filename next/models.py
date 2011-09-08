@@ -67,7 +67,7 @@ class Node(Base):
     id = Column(Integer, primary_key=True)
 
     point = GeometryColumn(
-        Point(dimension=2, srid=4326, spatial_index=True)
+        Point(dimension=2, spatial_index=True)
         )
 
     weight = Column(Integer)

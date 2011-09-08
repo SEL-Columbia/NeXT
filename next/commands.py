@@ -34,20 +34,34 @@ class ImportFixtures(Command):
     def command(self):
         from yaml import load
         from next.models import Base
+        from shapely.wkt import loads
+
         config_uri = self.args[0]
         env = bootstrap(config_uri)
         engine = engine_from_config(env['registry'].settings, 'sqlalchemy.')
+        try:
+            engine.execute(
+                'ALTER TABLE nodes DROP CONSTRAINT enforce_srid_point')
+        except:
+            pass
+
         initialize_sql(engine)
-        tables = Base.metadata.tables
-        for table_name in tables:
-            table = tables[table_name]
-            yaml_data = load(open('%s/%s.yaml' % (fix_folder, table_name)))
-            logger.info('Loading data for %s' % table_name)
+
+        tables = Base.metadata.sorted_tables
+        for table in tables:
+            yaml_data = load(open('%s/%s.yaml' % (fix_folder, table.name)))
+            logger.info('Loading data for %s' % table.name)
             for obj in yaml_data:
                 # sanity check before we import the data
                 assert len(obj.keys()) == len(table.c.keys())
-                print obj
-                #table.insert(obj.values()).execute()
+                inst = {}
+                for key, value in obj.iteritems():
+                    column_spec = table.c[key]
+                    if str(column_spec.type) in geom_types:
+                        inst[column_spec.name] = loads(value).wkb.encode('hex')
+                    else:
+                        inst[column_spec.name] = value
+                table.insert().execute(inst)
 
 
 class ExportFixtures(Command):
