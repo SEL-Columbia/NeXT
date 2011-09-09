@@ -1,0 +1,22 @@
+- fields: {id: 1, name: !!python/unicode 'population'}
+  table: nodetypes
+- fields: {id: 1, name: !!python/unicode 'New york city'}
+  table: regions
+- fields: {id: 1, node_type_id: 1, point: POINT (1.0000000000000000 1.0000000000000000),
+    region_id: 1, weight: 2}
+  table: nodes
+- fields: {id: 2, node_type_id: 1, point: POINT (1.0000000000000000 1.0000000000000000),
+    region_id: 1, weight: 2}
+  table: nodes
+- fields: {id: 3, node_type_id: 1, point: POINT (1.0000000000000000 1.0000000000000000),
+    region_id: 1, weight: 2}
+  table: nodes
+- fields: {id: 4, node_type_id: 1, point: POINT (1.0000000000000000 1.0000000000000000),
+    region_id: 1, weight: 2}
+  table: nodes
+- fields: {id: 5, node_type_id: 1, point: POINT (1.0000000000000000 1.0000000000000000),
+    region_id: 1, weight: 2}
+  table: nodes
+- fields: {id: 6, node_type_id: 1, point: POINT (1.0000000000000000 1.0000000000000000),
+    region_id: 1, weight: 2}
+  table: nodes
