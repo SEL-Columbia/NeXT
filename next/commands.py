@@ -56,13 +56,13 @@ class ImportFixtures(Command):
             table = tables.get(record['table'], None)
             if table is not None:
                 logger.info('Load fixtures for table -> %s ' % table)
-                assert len(table.c.keys()) == len(record['fields'].keys()), 'The two should match'
                 inst = {}
                 for column_name, cell in record['fields'].iteritems():
                     column_spec = table.c.get(column_name, None)
                     if column_spec is not None:
                         if str(column_spec.type) in geom_types:
-                            inst[column_spec.name] = loads(cell).wkb.encode('hex')
+                            inst[column_spec.name] \
+                                = loads(cell).wkb.encode('hex')
                         else:
                             inst[column_spec.name] = cell
                 table.insert().execute(inst)

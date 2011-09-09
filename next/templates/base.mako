@@ -13,7 +13,7 @@
 
      <div class="container">
 
-       <h1>Modi Labs Spatial Planner</h1>
+       <h1><a href="/">Modi Labs Spatial Planner</a></h1>
        <hr />
        ${self.body()}
 

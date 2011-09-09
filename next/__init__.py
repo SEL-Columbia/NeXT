@@ -15,6 +15,8 @@ def main(global_config, **settings):
     config.add_static_view('static', 'next:static')
 
     config.add_route('index', '/')
+    config.add_route('upload-nodes', 'upload-nodes')
+
     config.add_route('add-region', '/add-region')
 
     config.scan()
