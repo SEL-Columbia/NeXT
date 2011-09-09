@@ -1,5 +1,6 @@
 
 import logging
+from pprint import pprint
 from paste.script.command import Command
 from pyramid.paster import bootstrap
 from sqlalchemy import engine_from_config
@@ -37,8 +38,11 @@ class ImportFixtures(Command):
         from shapely.wkt import loads
 
         config_uri = self.args[0]
+        fixtures_data = load(open(self.args[1], 'r'))
+        
         env = bootstrap(config_uri)
         engine = engine_from_config(env['registry'].settings, 'sqlalchemy.')
+
         try:
             engine.execute(
                 'ALTER TABLE nodes DROP CONSTRAINT enforce_srid_point')
@@ -47,20 +51,20 @@ class ImportFixtures(Command):
 
         initialize_sql(engine)
 
-        tables = Base.metadata.sorted_tables
-        for table in tables:
-            yaml_data = load(open('%s/%s.yaml' % (fix_folder, table.name)))
-            logger.info('Loading data for %s' % table.name)
-            for obj in yaml_data:
-                # sanity check before we import the data
-                assert len(obj.keys()) == len(table.c.keys())
+        tables = Base.metadata.tables
+        for record in fixtures_data:
+            table = tables.get(record['table'], None)
+            if table is not None:
+                logger.info('Load fixtures for table -> %s ' % table)
+                assert len(table.c.keys()) == len(record['fields'].keys()), 'The two should match'
                 inst = {}
-                for key, value in obj.iteritems():
-                    column_spec = table.c[key]
-                    if str(column_spec.type) in geom_types:
-                        inst[column_spec.name] = loads(value).wkb.encode('hex')
-                    else:
-                        inst[column_spec.name] = value
+                for column_name, cell in record['fields'].iteritems():
+                    column_spec = table.c.get(column_name, None)
+                    if column_spec is not None:
+                        if str(column_spec.type) in geom_types:
+                            inst[column_spec.name] = loads(cell).wkb.encode('hex')
+                        else:
+                            inst[column_spec.name] = cell
                 table.insert().execute(inst)
 
 
@@ -81,18 +85,14 @@ class ExportFixtures(Command):
         engine = engine_from_config(env['registry'].settings, 'sqlalchemy.')
         initialize_sql(engine)
 
-        tables = Base.metadata.tables
-        for table_name in tables.keys():
-            yaml_file = open('%s/%s.yaml' % (fix_folder, table_name), 'w')
-            table_data = []
-            table = tables[table_name]
+        tables = Base.metadata.sorted_tables
+        assert self.args[1] is not None, 'You should provide a output file'
+        yaml_file = open(self.args[1], 'w')
+        fixtures = []
 
-            logger.info('Exporing table -> %s' % table)
-            logger.info('Table columns  -> %s ' % table.c.keys())
-
-            stmt = table.select()
-            for row in stmt.execute():
-                c = {}
+        for table in tables:
+            for row in table.select().execute():
+                c = {'table': table.name, 'fields': {}}
                 columns = table.c.keys()
                 # sanity check before we export the data
                 assert len(columns) == len(row)
@@ -101,9 +101,10 @@ class ExportFixtures(Command):
                     cell = row[i]
                     if str(column.type) in geom_types:
                         # we have to call str on the binary column first
-                        c[column.name] = loads(str(cell)).wkt
+                        c['fields'][column.name] = loads(str(cell)).wkt
                     else:
-                        c[column.name] = cell
-                table_data.append(c)
-            dump(table_data, yaml_file)
-            yaml_file.close()
+                        c['fields'][column.name] = cell
+
+                fixtures.append(c)
+
+        dump(fixtures, yaml_file)
