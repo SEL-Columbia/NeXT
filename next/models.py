@@ -28,7 +28,14 @@ Base = declarative_base()
 
 
 class Region(Base):
-    """
+    """A region is a place holder that allows for nodes to be grouped
+    by place.
+
+    Usage::
+
+        nyc = Region(u'New York City')
+        session.add(nyc)
+
     """
 
     __tablename__ = 'regions'
@@ -45,6 +52,7 @@ class Region(Base):
 
 class NodeType(Base):
     """
+    A NodeType
     """
 
     __tablename__ = 'nodetypes'
@@ -124,6 +132,7 @@ class Edge(Base):
     def __repr__(self):
         return '#<Edge %s>' % self.id
 
+# Needed this to add the nodes table to the PostGIS geometry_table.
 GeometryDDL(Node.__table__)
 
 
