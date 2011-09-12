@@ -11,6 +11,7 @@
         id=""
         action="/upload-nodes" 
         enctype="multipart/form-data">
+
     <div>
       <select name="node-type">
         % for type in node_types:
@@ -18,6 +19,7 @@
         % endfor
        </select>
     </div>
+
     <div>
       <select name='region'>
         % for region in regions:
@@ -25,6 +27,7 @@
         % endfor
        </select>
     </div>
+
     <div>
       <input type="file" name="node-file" value="" />
     </div>

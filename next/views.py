@@ -30,7 +30,7 @@ class AddRegionSchema(MappingSchema):
 
 @view_config(route_name='add-region')
 def add_region(request):
-    return Response('okay')
+    return Response()
 
 
 @view_config(route_name='upload-nodes', renderer='upload_nodes.mako')
@@ -51,22 +51,24 @@ def upload_nodes(request):
         region = session.query(
             Region).get(request.params['region'])
 
-        filename = request.params['node-file'].filename
-        node_file = request.params['node-file'].file
-        file_path = os.path.join('/tmp', filename)
-        tmp_file = open(file_path, 'wb')
-        tmp_file.write(node_file.read())
-        tmp_file.close()
-        csv_file = csv.reader(open(file_path, 'rU'))
+        if node_type and region:
 
-        for row in csv_file:
-            node = Node(
-                WKTSpatialElement('POINT(%s %s)' % (row[0], row[1])),
-                0,
-                node_type,
-                region
-                )
-            session.add(node)
+            filename = request.params['node-file'].filename
+            node_file = request.params['node-file'].file
+            file_path = os.path.join('/tmp', filename)
+            tmp_file = open(file_path, 'wb')
+            tmp_file.write(node_file.read())
+            tmp_file.close()
+            csv_file = csv.reader(open(file_path, 'rU'))
+
+            for row in csv_file:
+                node = Node(
+                    WKTSpatialElement('POINT(%s %s)' % (row[0], row[1])),
+                    0,
+                    node_type,
+                    region
+                    )
+                session.add(node)
         return HTTPFound(location='/')
     else:
-        return Response('You shoud piss off')
+        return HTTPFound(location='/')
