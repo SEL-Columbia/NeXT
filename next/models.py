@@ -11,7 +11,6 @@ from geoalchemy import Point
 from geoalchemy import GeometryDDL
 
 from sqlalchemy import Integer
-from sqlalchemy import DateTime
 from sqlalchemy import Unicode
 from sqlalchemy import ForeignKey
 
@@ -41,6 +40,10 @@ class Scenario(Base):
 
     def __repr__(self):
         return '#<Scenario %s>' % self.name
+
+    def has_run(self):
+        # stub for right now
+        return True
 
 
 class NodeType(Base):
@@ -85,11 +88,11 @@ class Node(Base):
         primaryjoin=scenario_id == Scenario.id
         )
 
-    def __init__(self, point, weight, node_type, region):
+    def __init__(self, point, weight, node_type, scenario):
         self.point = point
         self.weight = weight
         self.node_type = node_type
-        self.region = region
+        self.scenario = scenario
 
     def __repr__(self):
         return '#<Node id: %s type: %s>' % (self.id, self.node_type.name)

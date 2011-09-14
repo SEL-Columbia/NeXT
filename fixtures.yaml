@@ -1,16 +1,4 @@
-- fields: {id: 1, name: !!python/unicode 'population'}
+  - fields: {name: !!python/unicode 'population'}
   table: nodetypes
-- fields: {id: 1, name: !!python/unicode 'New york city'}
-  table: regions
-- fields: {node_type_id: 1, point: POINT (1.0000000000000000 1.0000000000000000), region_id: 1, weight: 2}
-  table: nodes
-- fields: {node_type_id: 1, point: POINT (1.0000000000000000 1.0000000000000000), region_id: 1, weight: 2}
-  table: nodes
-- fields: {node_type_id: 1, point: POINT (1.0000000000000000 1.0000000000000000), region_id: 1, weight: 2}
-  table: nodes
-- fields: {node_type_id: 1, point: POINT (1.0000000000000000 1.0000000000000000), region_id: 1, weight: 2}
-  table: nodes
-- fields: {node_type_id: 1, point: POINT (1.0000000000000000 1.0000000000000000), region_id: 1, weight: 2}
-  table: nodes
-- fields: {node_type_id: 1, point: POINT (1.0000000000000000 1.0000000000000000), region_id: 1, weight: 2}
-  table: nodes
+- fields: {name: !!python/unicode 'facility'}
+  table: nodetypes
