@@ -26,18 +26,11 @@ DBSession = scoped_session(sessionmaker(extension=ZopeTransactionExtension()))
 Base = declarative_base()
 
 
-class Region(Base):
-    """A region is a place holder that allows for nodes to be grouped
-    by place.
-
-    Usage::
-
-        nyc = Region(u'New York City')
-        session.add(nyc)
-
+class Scenario(Base):
+    """
     """
 
-    __tablename__ = 'regions'
+    __tablename__ = 'scenarios'
 
     id = Column(Integer, primary_key=True)
     name = Column(Unicode)
@@ -46,7 +39,7 @@ class Region(Base):
         self.name = name
 
     def __repr__(self):
-        return '#<Region %s>' % self.name
+        return '#<Scenario %s>' % self.name
 
 
 class NodeType(Base):
@@ -85,10 +78,10 @@ class Node(Base):
         primaryjoin=node_type_id == NodeType.id
         )
 
-    region_id = Column(Integer, ForeignKey('regions.id'))
-    region = relationship(
-        Region,
-        primaryjoin=region_id == Region.id
+    scenario_id = Column(Integer, ForeignKey('scenarios.id'))
+    scenario = relationship(
+        Scenario,
+        primaryjoin=scenario_id == Scenario.id
         )
 
     def __init__(self, point, weight, node_type, region):
