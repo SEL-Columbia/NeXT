@@ -24,6 +24,19 @@ def index(request):
             }
 
 
+@view_config(route_name='rtree')
+def rtree(request):
+    return Response(str(request.rtree))
+
+
+@view_config(route_name='show-region', renderer='show_region.mako')
+def show_region(request):
+    session = DBSession()
+    region = session.query(Region).get(int(request.matchdict['id']))
+    nodes = session.query(Node).filter_by(region=region)
+    return {'region': region, 'nodes': nodes}
+
+
 class AddRegionSchema(MappingSchema):
     name = SchemaNode(String())
 

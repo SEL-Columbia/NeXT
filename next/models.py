@@ -4,7 +4,6 @@ Models for Next project.
 Ivan Willig, Chris Natali
 
 """
-import transaction
 
 from geoalchemy import Column
 from geoalchemy import GeometryColumn
@@ -99,7 +98,7 @@ class Node(Base):
         self.region = region
 
     def __repr__(self):
-        return '#<Node %s>' % self.id
+        return '#<Node id: %s type: %s>' % (self.id, self.node_type.name)
 
 
 class Edge(Base):
