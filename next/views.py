@@ -1,7 +1,7 @@
 import os
 import csv
 
-from pyramid.response import Response
+# from pyramid.response import Response
 from pyramid.httpexceptions import HTTPNotFound
 from pyramid.view import view_config
 from pyramid.httpexceptions import HTTPFound
@@ -113,7 +113,7 @@ def create_scenario(request):
         # sc.id to send the user to. If I don't call flush, I get a None.
         # TODO... FIX this.
         session.flush()
-        # send the user to the show page right now
+        # send the user to the show scenario page right now
         return HTTPFound(location=request.route_url('show-scenario', id=sc.id))
 
     elif request.method == 'GET':
@@ -122,11 +122,27 @@ def create_scenario(request):
         return HTTPForbidden()
 
 
+def find_magic(pop_nodes, fac_nodes):
+    pass
+
+
 def run_scenario(request):
     """
     """
-    # scenario = get_object_or_404(Scenario, request.matchdict['id'])
-    return Response('You can\'t run these things yet !')
+
+    session = DBSession()
+    scenario = get_object_or_404(Scenario, request.matchdict['id'])
+    pop_type = session.query(NodeType).filter_by(name=u'population').first()
+    fac_type = session.query(NodeType).filter_by(name=u'facility').first()
+    sc_nodes = session.query(Node).filter_by(scenario=scenario)
+
+    pop_nodes = sc_nodes.filter_by(node_type=pop_type)
+    fac_nodes = sc_nodes.filter_by(node_type=fac_type)
+    edges = find_magic(pop_nodes, fac_nodes)
+    session.add_all(edges)
+
+    return HTTPFound(
+        location=request.route_url('show-scenario', id=scenario.id))
 
 
 @view_config(route_name='show-scenario', renderer='show-scenario.mako')
