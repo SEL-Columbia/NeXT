@@ -10,6 +10,7 @@ requires = [
     'pyramid',
     'pyyaml',
     'Shapely',
+    'rtree',
     'geoalchemy',
     'colander',
     'deform',
@@ -20,13 +21,13 @@ requires = [
     'zope.sqlalchemy',
     ]
 
-if sys.version_info[:3] < (2,5,0):
+if sys.version_info[:3] < (2, 5, 0):
     requires.append('pysqlite')
 
 setup(name='NeXT',
       version='0.0',
       description='NeXT',
-      long_description=README + '\n\n' +  CHANGES,
+      long_description = README + '\n\n' +  CHANGES,
       classifiers=[
         "Programming Language :: Python",
         "Framework :: Pylons",
@@ -53,4 +54,3 @@ setup(name='NeXT',
       """,
       paster_plugins=['pyramid'],
       )
-

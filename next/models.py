@@ -11,6 +11,7 @@ from geoalchemy import Point
 from geoalchemy import GeometryDDL
 
 from sqlalchemy import Integer
+from sqlalchemy import DateTime
 from sqlalchemy import Unicode
 from sqlalchemy import ForeignKey
 
