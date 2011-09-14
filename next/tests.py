@@ -1,4 +1,3 @@
-
 import unittest
 #from pyramid.config import Configurator
 from pyramid import testing
@@ -37,9 +36,9 @@ class TestDatabase(unittest.TestCase):
     def tearDown(self):
         testing.tearDown()
 
-    def _get_region(self):
+    def _get_scenario(self):
         from next.models import Scenario
-        return Scenario(u'New York City')
+        return Scenario(u'scenario1')
 
     def _get_node_type(self):
         from next.models import NodeType
@@ -52,15 +51,15 @@ class TestDatabase(unittest.TestCase):
             WKTSpatialElement('POINT (1 1)'),
             100,
             self._get_node_type(),
-            self._get_region(),
+            self._get_scenario(),
             )
 
-    def test_region(self):
+    def test_scenario(self):
         from next.models import Scenario
-        r1 = self._get_region()
-        self.session.add(r1)
-        r2 = self.session.query(Scenario).first()
-        self.assertEqual(r1.name, r2.name)
+        s1 = self._get_scenario()
+        self.session.add(s1)
+        s2 = self.session.query(Scenario).first()
+        self.assertEqual(s1.name, s2.name)
 
     def test_node_type(self):
         from next.models import NodeType
