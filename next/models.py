@@ -97,6 +97,10 @@ class Node(Base):
     def __repr__(self):
         return '#<Node id: %s type: %s>' % (self.id, self.node_type.name)
 
+    def to_nice_geom(self):
+        from shapely.wkb import loads
+        return loads(str(self.point))
+
 
 class Edge(Base):
     """
@@ -126,7 +130,7 @@ class Edge(Base):
         self.weight = weight
 
     def __repr__(self):
-        return '#<Edge %s>' % self.id
+        return '#<Edge from:%s to: %s>' % (self.from_node.id, self.to_node.id)
 
 # Needed this to add the nodes table to the PostGIS geometry_table.
 GeometryDDL(Node.__table__)

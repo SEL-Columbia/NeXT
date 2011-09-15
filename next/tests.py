@@ -9,7 +9,7 @@ def _initTestingDB():
     from next.models import initialize_sql
     from next.models import DBSession
     initialize_sql(
-        create_engine('postgresql://postgres:password@localhost/next')
+        create_engine('postgresql://postgres:password@localhost/next_testing')
         )
     return DBSession()
 
@@ -38,8 +38,8 @@ class TestDatabase(unittest.TestCase):
         testing.tearDown()
 
     def _get_region(self):
-        from next.models import Region
-        return Region(u'New York City')
+        from next.models import Scenario
+        return Scenario(u'New York City')
 
     def _get_node_type(self):
         from next.models import NodeType
@@ -56,10 +56,10 @@ class TestDatabase(unittest.TestCase):
             )
 
     def test_region(self):
-        from next.models import Region
+        from next.models import Scenario
         r1 = self._get_region()
         self.session.add(r1)
-        r2 = self.session.query(Region).first()
+        r2 = self.session.query(Scenario).first()
         self.assertEqual(r1.name, r2.name)
 
     def test_node_type(self):

@@ -39,7 +39,7 @@ class ImportFixtures(Command):
 
         config_uri = self.args[0]
         fixtures_data = load(open(self.args[1], 'r'))
-        
+
         env = bootstrap(config_uri)
         engine = engine_from_config(env['registry'].settings, 'sqlalchemy.')
 

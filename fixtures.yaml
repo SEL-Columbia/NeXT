@@ -1,4 +1,4 @@
-  - fields: {name: !!python/unicode 'population'}
+- fields: {name: !!python/unicode 'population'}
   table: nodetypes
 - fields: {name: !!python/unicode 'facility'}
   table: nodetypes
