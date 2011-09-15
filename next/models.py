@@ -105,9 +105,11 @@ class Node(Base):
         from shapely.wkb import loads
         point = loads(str(self.point.geom_wkb))
         return {'type': 'Feature',
-                'geometry': {'type': point.type,
-                             'coordinates': point.coords[0]},
-                             'properties': {'type': self.node_type.name }}
+                'geometry':
+                {'type': point.type,
+                 'coordinates': point.coords[0]},
+                 'properties': {'type': self.node_type.name,
+                                'id': self.id }}
 
 
 class Edge(Base):

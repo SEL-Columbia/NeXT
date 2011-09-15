@@ -40,9 +40,8 @@
 
 <%def name="body()">
   <h3>Overview for: ${scenario}</h3>
-  
-  <a class="btn primary" 
-     href="${request.route_url('run-scenario', id=scenario.id)}">Run Scenario</a>
+
+  <br />
 
   <div id="scenario-map" class="span16" style="height: 400px;padding-top: 10px;">
     
