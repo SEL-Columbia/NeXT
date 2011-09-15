@@ -22,11 +22,12 @@ def computeSphericalDistance(node1, node2):
     return earthRadiusInMeters * math.atan2(y, x)
 
 
-def generate_nearest_neighbor(pop_nodes, facility_nodes):
+def generate_nearest_neighbor(scenario, pop_nodes, facility_nodes):
     """
     TODO, look to make this an interface
     Note that this function does not commit any edges to the database.
     arguments:
+          scenario: the scenario we are running in
           pop_nodes: an iterable of next.models.Node
           facility_nodes: iterable of next.models.Node
 
@@ -43,7 +44,7 @@ def generate_nearest_neighbor(pop_nodes, facility_nodes):
             if between <= nearestDist:
                 nearest = fac_node
                 nearestDist = between
-        edge = Edge(pop_node, nearest, nearestDist)
+        edge = Edge(scenario, pop_node, nearest, nearestDist)
         edges.append(edge)
 
     assert len(edges) == pop_nodes.count()

@@ -12,7 +12,7 @@
 
   <fieldset>
     <label>Scenario name </label>
-    <input type="text" name="name" value="" />
+    <input class="xlarge" type="text" name="name" value="" />
   </fieldset>
 
   <fieldset>

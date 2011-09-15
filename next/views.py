@@ -1,12 +1,12 @@
 import os
 import csv
+import simplejson
 
 from pyramid.response import Response
 from pyramid.httpexceptions import HTTPNotFound
 from pyramid.view import view_config
 from pyramid.httpexceptions import HTTPFound
 from pyramid.httpexceptions import HTTPForbidden
-from pyramid.util import DottedNameResolver
 
 from geoalchemy import WKTSpatialElement
 
@@ -147,17 +147,22 @@ def run_scenario(request):
     # 'module.sub_packge:function_name'
     func = getattr(importlib.import_module(func_module), func_str)
     # call the function with the nodes
-    edges = func(pop_nodes, fac_nodes)
+    edges = func(scenario, pop_nodes, fac_nodes)
     session.add_all(edges)
     return HTTPFound(
         location=request.route_url('show-scenario', id=scenario.id))
+
+
+@view_config(route_name='show-scenario-json')
+def show_scenario_json(request):
+    sc = get_object_or_404(Scenario, request.matchdict['id'])
+    geojson = {'type': 'FeatureCollection',
+               'features': [node.to_geojson() for node in sc.get_nodes()]}
+    return Response(simplejson.dumps(geojson))
 
 
 @view_config(route_name='show-scenario', renderer='show-scenario.mako')
 def show_scenario(request):
     """
     """
-    session = DBSession()
-    scenario = get_object_or_404(Scenario, request.matchdict['id'])
-    nodes = session.query(Node).filter_by(scenario=scenario)
-    return {'scenario': scenario, 'nodes': nodes }
+    return {'scenario': get_object_or_404(Scenario, request.matchdict['id'])}

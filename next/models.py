@@ -41,9 +41,13 @@ class Scenario(Base):
     def __repr__(self):
         return '#<Scenario %s>' % self.name
 
-    def has_run(self):
-        # stub for right now
-        return True
+    def get_edges(self):
+        session = DBSession()
+        return session.query(Edge).filter_by(scenario=self)
+
+    def get_nodes(self):
+        session = DBSession()
+        return session.query(Node).filter_by(scenario=self)
 
 
 class NodeType(Base):
@@ -97,9 +101,13 @@ class Node(Base):
     def __repr__(self):
         return '#<Node id: %s type: %s>' % (self.id, self.node_type.name)
 
-    def to_nice_geom(self):
+    def to_geojson(self):
         from shapely.wkb import loads
-        return loads(str(self.point))
+        point = loads(str(self.point.geom_wkb))
+        return {'type': 'Feature',
+                'geometry': {'type': point.type,
+                             'coordinates': point.coords[0]},
+                             'properties': {'type': self.node_type.name }}
 
 
 class Edge(Base):
@@ -122,12 +130,19 @@ class Edge(Base):
         primaryjoin=to_node_id == Node.id
         )
 
-    weight = Column(Integer)
+    scenario_id = Column(Integer, ForeignKey('scenarios.id'))
+    scenario = relationship(
+        Scenario,
+        primaryjoin=scenario_id == Scenario.id
+        )
 
-    def __init__(self, from_node, to_node, weight):
+    distance = Column(Integer)
+
+    def __init__(self, scenario, from_node, to_node, distance):
+        self.scenario = scenario
         self.from_node = from_node
         self.to_node = to_node
-        self.weight = weight
+        self.distance = distance
 
     def __repr__(self):
         return '#<Edge from:%s to: %s>' % (self.from_node.id, self.to_node.id)
