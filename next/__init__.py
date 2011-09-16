@@ -18,7 +18,7 @@ def main(global_config, **settings):
     config.add_route('create-scenario', '/scenario/new')
     config.add_route('show-scenario', '/scenario/{id}')
     config.add_route('run-scenario', '/scenario/{id}/run')
-    # config.add_route('map-scenario', '/scenario/{id}/map')
+    config.add_route('graph-scenario', '/scenario/{id}/graph-data')
     config.add_route('show-scenario-json', '/scenario/{id}/json')
 
     config.scan()
