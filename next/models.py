@@ -19,6 +19,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import scoped_session
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import relationship
+from sqlalchemy.sql import text
 
 from zope.sqlalchemy import ZopeTransactionExtension
 
@@ -48,6 +49,20 @@ class Scenario(Base):
     def get_nodes(self):
         session = DBSession()
         return session.query(Node).filter_by(scenario=self)
+
+    def get_bounds(self, srid=900913):
+        """
+        Method to find the bound box for a scenario.
+        TODO, remove the hard coded sql text
+        """
+        from shapely.wkt import loads
+        session = DBSession()
+        conn = session.connection()
+        sql = text(
+            '''SELECT astext(st_transform(st_setsrid(st_extent(point), 4326), :srid))
+               FROM nodes WHERE scenario_id = :sc_id''')
+        rset = conn.execute(sql, srid=srid, sc_id=self.id)
+        return loads(rset.fetchone()[0])
 
 
 class NodeType(Base):

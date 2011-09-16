@@ -28,6 +28,7 @@
     $(function() { 
 
     load_page({'mapDiv': 'scenario-map', 
+              'bbox': ${list(scenario.get_bounds().bounds)},
               'url' : '${request.route_url('show-scenario-json', id=scenario.id)}',
               'scenario': ${scenario.id}
              });

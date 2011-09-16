@@ -34,5 +34,7 @@ var load_page = function  (options) {
 
   map.addLayer(gsat);
   map.addLayer(nodes);
-  
+  var bounds = new OpenLayers.Bounds.fromArray(options.bbox);
+  map.zoomToExtent(bounds);
+
 };

@@ -158,7 +158,7 @@ def show_scenario_json(request):
     sc = get_object_or_404(Scenario, request.matchdict['id'])
     geojson = {'type': 'FeatureCollection',
                'features': [node.to_geojson() for node in sc.get_nodes()]}
-    return Response(simplejson.dumps(geojson))
+    return Response(simplejson.dumps(geojson), content_type='application/json')
 
 
 @view_config(route_name='show-scenario', renderer='show-scenario.mako')

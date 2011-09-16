@@ -24,11 +24,9 @@
   <body>
 
      <div class="container">
-
-       <h1><a href="/">Modi Labs Spatial Planner</a></h1>
+       <h1><a href="/">NeXT</a></h1>
        <hr />
        ${self.body()}
-
      </div>
 
   </body>
