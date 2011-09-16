@@ -8,6 +8,8 @@ CHANGES = open(os.path.join(here, 'CHANGES.txt')).read()
 
 requires = [
     'pyramid',
+    'simplejson',
+    'geojson',
     'pyyaml',
     'Shapely',
     'rtree',

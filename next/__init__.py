@@ -16,12 +16,10 @@ def main(global_config, **settings):
     config.add_route('index', '/')
 
     config.add_route('create-scenario', '/scenario/new')
-
-    config.add_route('show-scenario', '/scenairo/{id}')
-
+    config.add_route('show-scenario', '/scenario/{id}')
     config.add_route('run-scenario', '/scenario/{id}/run')
-
-    config.add_route('add-node-sc', '/scenario/{id}/add-node')
+    # config.add_route('map-scenario', '/scenario/{id}/map')
+    config.add_route('show-scenario-json', '/scenario/{id}/json')
 
     config.scan()
     return config.make_wsgi_app()

@@ -11,12 +11,12 @@
    action="${request.route_url('create-scenario')}">
 
   <fieldset>
-    <label>Scenario name </label>
-    <input type="text" name="name" value="" />
+    <label>Scenario name</label>
+    <input class="xlarge" type="text" name="name" value="" />
   </fieldset>
 
   <fieldset>
-    <label>Population CSV file </label>
+    <label>Population CSV file</label>
     <input type="file" name="pop-csv" value="" />  
   </fieldset>
 
@@ -26,7 +26,7 @@
   </fieldset>
   
   <input 
-     class="btn"
+     class="btn primary"
      type="submit" 
      name="" 
      value="Upload and run scenario" />

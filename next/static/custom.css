@@ -3,3 +3,7 @@
     width: 100%;
     background: #eee;
 } 
+
+form label { 
+  padding: 5px;
+}

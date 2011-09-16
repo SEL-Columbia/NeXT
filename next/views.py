@@ -1,12 +1,13 @@
 import os
 import csv
+import simplejson
 
-# from pyramid.response import Response
+from pyramid.response import Response
 from pyramid.httpexceptions import HTTPNotFound
 from pyramid.view import view_config
 from pyramid.httpexceptions import HTTPFound
 from pyramid.httpexceptions import HTTPForbidden
-from pyramid.url import route_url
+
 from geoalchemy import WKTSpatialElement
 
 from next.models import Scenario
@@ -76,7 +77,6 @@ def create_scenario(request):
     3. upload two csv files
       -> import the csv files as nodes
       -> assgin types
-    4. run scenario
     """
     session = DBSession()
     if request.method == 'POST':
@@ -94,7 +94,7 @@ def create_scenario(request):
 
         name = request.POST['name']
         # make sure that we have a name
-        # fix me
+        # TODO we should
         assert len(name) != 0
 
         sc = Scenario(name)
@@ -114,46 +114,55 @@ def create_scenario(request):
         # TODO... FIX this.
         session.flush()
         # send the user to the show scenario page right now
-        return HTTPFound(location=request.route_url('show-scenario', id=sc.id))
+        return HTTPFound(location=request.route_url('run-scenario', id=sc.id))
 
     elif request.method == 'GET':
         return {}
     else:
-        return HTTPForbidden()
+        raise HTTPForbidden()
 
 
-def find_magic(pop_nodes, fac_nodes):
-    pass
-
-
+@view_config(route_name='run-scenario')
 def run_scenario(request):
     """
     """
-
+    import importlib
     session = DBSession()
+    # get the scenario
     scenario = get_object_or_404(Scenario, request.matchdict['id'])
+
     pop_type = session.query(NodeType).filter_by(name=u'population').first()
     fac_type = session.query(NodeType).filter_by(name=u'facility').first()
+    # find all of the nodes that are associated with this scenario
     sc_nodes = session.query(Node).filter_by(scenario=scenario)
-
     pop_nodes = sc_nodes.filter_by(node_type=pop_type)
     fac_nodes = sc_nodes.filter_by(node_type=fac_type)
-    edges = find_magic(pop_nodes, fac_nodes)
-    session.add_all(edges)
 
+    # look up the function defined in the settings.ini file
+    func_path = request.registry.settings.get('next.main', None)
+    assert func_path, 'You must configure a function in your settings file'
+    func_module, func_str = func_path.split(':')
+
+    # import the function from a string format
+    # 'module.sub_packge:function_name'
+    func = getattr(importlib.import_module(func_module), func_str)
+    # call the function with the nodes
+    edges = func(scenario, pop_nodes, fac_nodes)
+    session.add_all(edges)
     return HTTPFound(
         location=request.route_url('show-scenario', id=scenario.id))
 
 
+@view_config(route_name='show-scenario-json')
+def show_scenario_json(request):
+    sc = get_object_or_404(Scenario, request.matchdict['id'])
+    geojson = {'type': 'FeatureCollection',
+               'features': [node.to_geojson() for node in sc.get_nodes()]}
+    return Response(simplejson.dumps(geojson), content_type='application/json')
+
+
 @view_config(route_name='show-scenario', renderer='show-scenario.mako')
 def show_scenario(request):
-
-    session = DBSession()
-
-    scenario = get_object_or_404(Scenario, request.matchdict['id'])
-    nodes = session.query(Node).filter_by(scenario=scenario)
-
-    if scenario.has_run():
-        return {'scenario': scenario, 'nodes': nodes }
-    else:
-        return HTTPFound(route_url('run-scenario', id=scenario.id))
+    """
+    """
+    return {'scenario': get_object_or_404(Scenario, request.matchdict['id'])}
