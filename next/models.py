@@ -59,10 +59,21 @@ class Scenario(Base):
         session = DBSession()
         conn = session.connection()
         sql = text(
-            '''SELECT astext(st_transform(st_setsrid(st_extent(point), 4326), :srid))
-               FROM nodes WHERE scenario_id = :sc_id''')
+            '''select astext(
+               st_transform(st_setsrid(st_extent(point), 4326), :srid))
+               from nodes where scenario_id = :sc_id''')
         rset = conn.execute(sql, srid=srid, sc_id=self.id)
         return loads(rset.fetchone()[0])
+
+    def get_population_vs_distance(self):
+        session = DBSession()
+        conn = session.connection()
+        sql = text(
+        '''select nodes.weight, edges.distance from nodes, edges
+           where edges.from_node_id = nodes.id and nodes.scenario_id = :sc_id
+           order by edges.distance ''')
+        rset = conn.execute(sql, sc_id=self.id).fetchall()
+        return rset
 
 
 class NodeType(Base):

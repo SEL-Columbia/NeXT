@@ -161,6 +161,15 @@ def show_scenario_json(request):
     return Response(simplejson.dumps(geojson), content_type='application/json')
 
 
+@view_config(route_name='graph-scenario')
+def graph_scenario(request):
+    sc = get_object_or_404(Scenario, request.matchdict['id'])
+    data = map(list, sc.get_population_vs_distance())
+    return Response(
+        simplejson.dumps(data),
+        content_type='application/json')
+
+
 @view_config(route_name='show-scenario', renderer='show-scenario.mako')
 def show_scenario(request):
     """
