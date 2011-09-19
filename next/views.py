@@ -1,3 +1,4 @@
+from shutil import copyfileobj
 import os
 import csv
 import simplejson
@@ -46,13 +47,17 @@ def csv_to_nodes(request, csv_file, scenario, node_type):
     # get the raw file data and write it to tmp file
     raw_file = csv_file.file
     filename = csv_file.filename
-    tmp_file_path = os.path.join('/tmp', filename)
-    tmp_file = open(tmp_file_path, 'wb')
-    tmp_file.write(raw_file.read())
-    tmp_file.close()
+
+    tmp_file = os.path.join(
+        request.registry.settings['next.temporary_folder'],
+        filename
+        )
+
+    copyfileobj(raw_file, open(tmp_file, 'wb'))
+
     # open the csv reader
     # using rU because of encoding issues with windows
-    csv_reader = csv.reader(open(tmp_file_path, 'rU'))
+    csv_reader = csv.reader(open(tmp_file, 'rU'))
     for row in csv_reader:
         geom = WKTSpatialElement('POINT(%s %s)' % (row[0], row[1]))
 
