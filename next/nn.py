@@ -40,7 +40,7 @@ def generate_nearest_neighbor(scenario, pop_nodes, facility_nodes):
         pop_geometry = loads(str(pop_node.point.geom_wkb))
         for fac_node in facility_nodes:
             fac_geometry = loads(str(fac_node.point.geom_wkb))
-            between = pop_geometry.distance(fac_geometry)
+            between = computeSphericalDistance(pop_geometry, fac_geometry)
             if between <= nearestDist:
                 nearest = fac_node
                 nearestDist = between
@@ -53,7 +53,6 @@ def generate_nearest_neighbor(scenario, pop_nodes, facility_nodes):
 
         edges.append(edge)
 
-    assert len(edges) == pop_nodes.count()
     return edges
 
 
