@@ -26,7 +26,7 @@ var load_page = function  (options) {
     strategies: [new OpenLayers.Strategy.Fixed()],
     styleMap:  style,
     protocol: new OpenLayers.Protocol.HTTP({
-      url: '/scenario/' + options.scenario + '/json',
+      url: options.json_url,
       format: new OpenLayers.Format.GeoJSON()
       
     })
@@ -59,17 +59,7 @@ var load_page = function  (options) {
     range = (max-min),
     interval = range / numBars;
     
-    /*
-      function debug(txt) {
-      // $('<p >')
-      // 	.text(txt)
-      // 	.appendTo($('#debug'));
-      }
-		debug("MAx distance is "+max);
-		debug("Min distance is "+min);
-		debug("Range is "+ range);
-		debug("Interval is "+ interval);
-    */
+
     var distributions = [];
     for(var i = 0; i < numBars; i++) {
       var start = min + (i * interval);
@@ -77,13 +67,13 @@ var load_page = function  (options) {
       var subset = _.filter(data, function(arr){
 	return arr[1] > start && arr[1] < end;
       });
-      //			debug("Between "+ start + " and " + end + " there are " + subset.length + " occurrences");
-			distributions.push({
-			  start: start,
-			  end: end,
-			  value: subset.length
-			});
+	distributions.push({
+	    start: start,
+	    end: end,
+	    value: subset.length
+	});
     }
+
     var r = Raphael(elemId);
     r.g.txtattr.font = "12px 'Fontin Sans', Fontin-Sans, sans-serif";
     r.g.text(160, 10, title);
@@ -91,8 +81,10 @@ var load_page = function  (options) {
   };
   
   
-  $.getJSON('data.json', function(data){
-    graphDistances("holder", data, 20, "people near facilities", "m");
+  $.getJSON(options.graph_url, function(data){
+
+    graphDistances("holder", data, 20, " # People near facilities", "m");
+  
   });
   
 
