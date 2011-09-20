@@ -21,7 +21,7 @@ def generate_nearest_neighbor(scenario, pop_nodes, facility_nodes):
     edges = []
     bounds = scenario.get_bounds(4326).bounds
     qt = util.QuadTree(10, bounds[:2], bounds[2:], 
-	    lambda obj: loads(str(obj.point.geom_wkb)).bounds[:2])
+	    lambda obj: loads(str(obj.point.geom_wkb)).bounds[:2], True)
     for fac_nd in facility_nodes: qt.add(fac_nd)
     for pop_node in pop_nodes:
         pop_geometry = loads(str(pop_node.point.geom_wkb))
