@@ -10,6 +10,7 @@ from pyramid.httpexceptions import HTTPFound
 from pyramid.httpexceptions import HTTPForbidden
 
 from geoalchemy import WKTSpatialElement
+from sqlalchemy.sql import text
 
 from next.models import Scenario
 from next.models import Node
@@ -158,12 +159,34 @@ def run_scenario(request):
         location=request.route_url('show-scenario', id=scenario.id))
 
 
-@view_config(route_name='show-scenario-json')
-def show_scenario_json(request):
+@view_config(route_name='show-population-json')
+def show_population_json(request):
+    session = DBSession()
+    conn = session.connection()
     sc = get_object_or_404(Scenario, request.matchdict['id'])
-    geojson = {'type': 'FeatureCollection',
-               'features': [node.to_geojson() for node in sc.get_nodes()]}
-    return Response(simplejson.dumps(geojson), content_type='application/json')
+    sql = text('''
+    select nodes.id,
+    st_asgeojson(nodes.point),
+    edges.distance, nodetypes.name
+    from nodes, edges, nodetypes
+    where nodes.scenario_id = :sc_id and
+    nodes.id = edges.from_node_id and
+    nodes.node_type_id = nodetypes.id
+    ''')
+    rset = conn.execute(sql, sc_id=sc.id).fetchall()
+    feats = [
+        {
+        'type': 'Feature',
+        'geometry': eval(feat[1]),
+        'properties': {
+            'distance': feat[2],
+            'type':feat[3] }
+        } for feat in rset
+     ]
+
+    feature_collection = {'type': 'FeatureCollection', 'features': feats }
+    return Response(simplejson.dumps(feature_collection),
+                    content_type='plain/text')
 
 
 @view_config(route_name='graph-scenario')

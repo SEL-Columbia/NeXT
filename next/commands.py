@@ -1,6 +1,5 @@
 
 import logging
-from pprint import pprint
 from paste.script.command import Command
 from pyramid.paster import bootstrap
 from sqlalchemy import engine_from_config
@@ -108,3 +107,26 @@ class ExportFixtures(Command):
                 fixtures.append(c)
 
         dump(fixtures, yaml_file)
+
+
+class ShapefileConvert(Command):
+
+    summary = ''
+    parser = Command.standard_parser()
+    parser.add_option('--shapefile', dest='shape_path', help='')
+
+    def command(self):
+        """
+        """
+        from osgeo import ogr
+        from osgeo.osr import SpatialReference
+        sp = SpatialReference()
+        sp.ImportFromEPSG(4326)
+        shapefile = ogr.Open(self.options.shape_path)
+        layer = shapefile.GetLayer()
+        for i in xrange(0, layer.GetFeatureCount()):
+            f = layer.GetFeature(i)
+            geometry = f.GetGeometryRef()
+            geometry.TransformTo(sp)
+            print geometry.ExportToWkt()
+            #print '%s, %s' % (geometry.GetX(), geometry.GetY())

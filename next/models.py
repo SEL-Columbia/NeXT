@@ -133,9 +133,11 @@ class Node(Base):
         return {'type': 'Feature',
                 'geometry':
                 {'type': point.type,
-                 'coordinates': point.coords[0]},
+                 'coordinates': point.coords[0]
+                 },
                  'properties': {'type': self.node_type.name,
-                                'id': self.id }}
+                                'id': self.id }
+                }
 
 
 class Edge(Base):
@@ -149,6 +151,7 @@ class Edge(Base):
     from_node_id = Column(Integer, ForeignKey('nodes.id'))
     from_node = relationship(
         Node,
+        backref='edge',
         primaryjoin=from_node_id == Node.id
         )
 

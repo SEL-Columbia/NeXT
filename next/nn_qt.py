@@ -19,7 +19,9 @@ def generate_nearest_neighbor(scenario, pop_nodes, facility_nodes):
             relation between a pop_node and its closest facility_node
     """
     edges = []
+
     bounds = scenario.get_bounds(srid=4326).bounds
+
     qt = util.QuadTree(10, bounds[:2], bounds[2:],
                        lambda obj: loads(str(obj.point.geom_wkb)).bounds[:2])
     for fac_nd in facility_nodes: qt.add(fac_nd)

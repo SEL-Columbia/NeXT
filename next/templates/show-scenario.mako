@@ -47,7 +47,7 @@
     load_page({'mapDiv': 'scenario-map', 
 
       'bbox': ${list(scenario.get_bounds().bounds)},
-      'json_url' : '${request.route_url('show-scenario-json', id=scenario.id)}',
+      'json_url' : '${request.route_url('show-population-json', id=scenario.id)}',
       'graph_url': '${request.route_url('graph-scenario', id=scenario.id)}',
       'scenario': ${scenario.id}
     });
@@ -70,21 +70,5 @@
     <div class="span-one-third">,.</div>
     <div class="span-two-third" id="holder"></div>
   </div>
-
-  <table class="zebra-striped">
-    <thead>
-      <td>From Node</td>
-      <td>Distance (Meters)</td>
-      <td>To Node</td>
-    </thead>
-    <tbody>
-      % for edge in scenario.get_edges():     
-      <tr>
-        <td>${edge.from_node}</td>
-        <td>${edge.distance}</td>
-        <td>${edge.to_node}</td>
-      </tr>
-     % endfor
-  </table>
 
 </%def>

@@ -81,33 +81,34 @@ class TestNearestNeighbor(unittest.TestCase):
     def tearDown(self):
         testing.tearDown()
 
-    def _get_data(self):
+    def _get_data(self, scenario):
         from next.models import Node
 
         pop1 = Node(
             WKTSpatialElement('POINT (1 1)'),
             1,
             _get_node_type(),
-            _get_scenario())
+            scenario)
 
         fac_1 = Node(
             WKTSpatialElement('POINT (1 3)'),
             1,
             _get_node_type('facility'),
-            _get_scenario())
+            scenario)
 
         fac_2 = Node(
             WKTSpatialElement('POINT (1 10)'),
             1,
             _get_node_type('facility'),
-            _get_scenario())
+            scenario)
+
         return pop1, fac_1, fac_2
 
     def test_simple_case(self):
         from next.nn import generate_nearest_neighbor
         from next.models import Edge, Scenario
-        pop1, fac_1, fac_2 = self._get_data()
         sc = Scenario(u'simple case')
+        pop1, fac_1, fac_2 = self._get_data(sc)
         self.session.add_all([sc, pop1, fac_1, fac_2])
         self.session.flush()
 
@@ -124,9 +125,11 @@ class TestNearestNeighbor(unittest.TestCase):
     def test_quad_tree(self):
         from next.nn_qt import generate_nearest_neighbor
         from next.models import Edge, Scenario
-        pop1, fac_1, fac_2 = self._get_data()
         sc = Scenario(u'quad test')
+        pop1, fac_1, fac_2 = self._get_data(sc)
+
         self.session.add_all([sc, pop1, fac_1, fac_2])
+        self.session.flush()
 
         edges = generate_nearest_neighbor(
             sc,
