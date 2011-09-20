@@ -9,18 +9,57 @@ var load_page = function  (options) {
       {type: google.maps.MapTypeId.TERRAIN, numZoomLevels: 22}
   ); 
 
-  var style = new OpenLayers.StyleMap({
+  var style = new OpenLayers.Style({
       'stroke': true,
       'stroleColor': '#808080'
   });
 
-  var lookup = {    
-      'population': {pointRadius: 4 , 'fillColor': '#0069d6'},
-      'facility':   {pointRadius: 6, 'fillColor': 'red'}
-  }
+  // var lookup = {    
+  //     'population': {pointRadius: 4 , 'fillColor': '#0069d6'},
+  //     'facility':   {pointRadius: 6, 'fillColor': 'red'}
+  // }
 
-  style.addUniqueValueRules('default', 'type', lookup);
+  // style.addUniqueValueRules('default', 'type', lookup);
+  
+  var ruleLow = new OpenLayers.Rule({
+  filter: new OpenLayers.Filter.Comparison({
+    type: OpenLayers.Filter.Comparison.LESS_THAN,
+    property: "distance",
+    value: 1000,
+  }),
+  symbolizer: {
+    pointRadius: 4, 
+    fillColor: "green",
+    strokeColor: "black"}
+  });
+  
+  var ruleMiddle = new OpenLayers.Rule({
+    filter: new OpenLayers.Filter.Comparison({
+      type: OpenLayers.Filter.Comparison.BETWEEN,
+      property: "distance",
+      lowerBoundary: 1000,
+      upperBoundary: 4499
+    }),
+    symbolizer: {
+      pointRadius: 4,
+      fillColor: "orange",
+      strokeColor: "black"}
+  });
 
+  var ruleHigh = new OpenLayers.Rule({ 
+    filter: new OpenLayers.Filter.Comparison({ 
+      type: OpenLayers.Filter.Comparison.GREATER_THAN,
+      property: "distance",
+      value: 4500
+    }),
+    symbolizer: { 
+      pointRadius: 4,
+      fillColor: "red",
+      strokeColor: "black"
+    }
+  });
+
+  style.addRules([ruleLow, ruleMiddle]);
 
   nodes = new OpenLayers.Layer.Vector('nodes', {
     strategies: [new OpenLayers.Strategy.Fixed()],
