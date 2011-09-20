@@ -22,6 +22,10 @@
      type="text/javascript" 
      src="${request.application_url}/static/show_scenario.js">
   </script>
+  <script 
+     type="text/javascript" 
+     src="${request.application_url}/static/prep_scenario.js">
+  </script>
 
   <script src="${request.application_url}/static/underscore.min.js" 
           type="text/javascript" charset="utf-8">
