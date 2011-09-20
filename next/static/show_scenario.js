@@ -38,8 +38,16 @@ var load_page = function  (options) {
   map.zoomToExtent(bounds);
 
 
-  function graphDistances(elemId, data, numBars, title, unit){
-    
+  function graphDistances(elemId, data, title, _opts){
+    var opts = _.extend({
+    	numBars: 20,
+    	defaultColor: 'blue',
+    	distColors: false,
+    	unit: 'm'
+    }, _opts);
+    var numBars = opts.numBars,
+        unit = opts.unit;
+
     function textForColumn(col) {
       var stxt = Math.floor(col.start),
       etxt = Math.floor(col.end);
@@ -54,8 +62,8 @@ var load_page = function  (options) {
       this.flag.animate({opacity: 0}, 300, function () {this.remove();});
     }
     var distances = _.map(data, function(arr){return arr[1]}),
-    max = Math.max.apply(window, distances),
-    min = Math.min.apply(window, distances),
+    max = _.max(distances),
+    min = _.min(distances),
     range = (max-min),
     interval = range / numBars;
     
@@ -77,13 +85,62 @@ var load_page = function  (options) {
     var r = Raphael(elemId);
     r.g.txtattr.font = "12px 'Fontin Sans', Fontin-Sans, sans-serif";
     r.g.text(160, 10, title);
-    r.g.barchart(10, 10, 300, 220, [_.pluck(distributions, 'value')]).hover(fin, fout);
+    var gOpts = {colors: [opts.defaultColor]};
+    var bc = r.g.barchart(10, 10, 300, 220, [_.pluck(distributions, 'value')], gOpts).hover(fin, fout);
+    if(!!opts.distColors) {
+    	var colors = _.map(distributions, function(d, i){
+    	    var dcMatch = _.detect(opts.distColors, function(a){ return d.end < a[1] });
+    	    return dcMatch!==undefined ? dcMatch[0] : opts.defaultColor;
+    	});
+	//bars are buried in the raphael object... AFAICT
+	var bars = bc.bars.items[0].items;
+	_.each(colors, function(c, i){
+	    bars[i].attr('fill', c);
+	});
+	(function drawLegend(){
+		var legend = {
+				x: 300,
+				y: 50,
+				fontStyle: "12px 'Fontin Sans', Fontin-Sans, sans-serif",
+				padding: 6,
+				boxOX: 0,
+				boxOY: -4,
+				boxW: 10,
+				boxH: 10,
+				rowHeight: 15
+			};
+		_.each(colors, function(colD, i){
+			var col = colD[0],
+				value = colD[1],
+				description = colD[2];
+			var rowY = legend.y + legend.rowHeight * i;
+			r.rect(legend.x + legend.boxOX, rowY + legend.boxOY, legend.boxW, legend.boxH)
+				.attr({
+					fill: col,
+					'stroke-opacity': 0.3
+				});
+			r.text(legend.x + legend.boxOX + legend.boxW + legend.padding, rowY, description)
+				.attr('text-anchor', 'start')
+				.attr('font', legend.fontStyle);
+		});
+	})();
+    }
   };
   
   
   $.getJSON(options.graph_url, function(data){
-
-    graphDistances("holder", data, 20, " # People near facilities", "m");
+    var opts = {
+    	unit: 'm',
+    	numBars: 20,
+    	//distColors is an optional list of color/value mappings
+    	distColors: [
+    	//   color, max, description
+                ['green', 1000, "Under 1km"],
+                ['orange', 5000, "Under 5km"],
+                ['red', Infinity, "Greater than 5km"]
+    	]
+    };
+    graphDistances("holder", data, " # People near facilities", opts);
   
   });
   
