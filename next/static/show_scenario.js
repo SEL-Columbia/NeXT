@@ -97,6 +97,33 @@ var load_page = function  (options) {
 	_.each(colors, function(c, i){
 	    bars[i].attr('fill', c);
 	});
+	(function drawLegend(){
+		var legend = {
+				x: 300,
+				y: 50,
+				fontStyle: "12px 'Fontin Sans', Fontin-Sans, sans-serif",
+				padding: 6,
+				boxOX: 0,
+				boxOY: -4,
+				boxW: 10,
+				boxH: 10,
+				rowHeight: 15
+			};
+		_.each(colors, function(colD, i){
+			var col = colD[0],
+				value = colD[1],
+				description = colD[2];
+			var rowY = legend.y + legend.rowHeight * i;
+			r.rect(legend.x + legend.boxOX, rowY + legend.boxOY, legend.boxW, legend.boxH)
+				.attr({
+					fill: col,
+					'stroke-opacity': 0.3
+				});
+			r.text(legend.x + legend.boxOX + legend.boxW + legend.padding, rowY, description)
+				.attr('text-anchor', 'start')
+				.attr('font', legend.fontStyle);
+		});
+	})();
     }
   };
   
