@@ -42,6 +42,7 @@ var load_page = function  (options) {
     var opts = _.extend({
     	numBars: 20,
     	defaultColor: 'blue',
+    	distColors: false,
     	unit: 'm'
     }, _opts);
     var numBars = opts.numBars,
@@ -85,14 +86,32 @@ var load_page = function  (options) {
     r.g.txtattr.font = "12px 'Fontin Sans', Fontin-Sans, sans-serif";
     r.g.text(160, 10, title);
     var gOpts = {colors: [opts.defaultColor]};
-    r.g.barchart(10, 10, 300, 220, [_.pluck(distributions, 'value')], gOpts).hover(fin, fout);
+    var bc = r.g.barchart(10, 10, 300, 220, [_.pluck(distributions, 'value')], gOpts).hover(fin, fout);
+    if(!!opts.distColors) {
+    	var colors = _.map(distributions, function(d, i){
+    	    var dcMatch = _.detect(opts.distColors, function(a){ return d.end < a[1] });
+    	    return dcMatch!==undefined ? dcMatch[0] : opts.defaultColor;
+    	});
+	//bars are buried in the raphael object... AFAICT
+	var bars = bc.bars.items[0].items;
+	_.each(colors, function(c, i){
+	    bars[i].attr('fill', c);
+	});
+    }
   };
   
   
   $.getJSON(options.graph_url, function(data){
     var opts = {
     	unit: 'm',
-    	numBars: 20
+    	numBars: 20,
+    	//distColors is an optional list of color/value mappings
+    	distColors: [
+    	//   color, max, description
+                ['green', 1000, "Under 1km"],
+                ['orange', 5000, "Under 5km"],
+                ['red', Infinity, "Greater than 5km"]
+    	]
     };
     graphDistances("holder", data, " # People near facilities", opts);
   
