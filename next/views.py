@@ -166,6 +166,7 @@ def show_population_json(request):
     sc = get_object_or_404(Scenario, request.matchdict['id'])
     sql = text('''
     select nodes.id,
+    nodes.weight,
     st_asgeojson(nodes.point),
     edges.distance, nodetypes.name
     from nodes, edges, nodetypes
@@ -177,10 +178,10 @@ def show_population_json(request):
     feats = [
         {
         'type': 'Feature',
-        'geometry': eval(feat[1]),
+        'geometry': simplejson.loads(feat[2]),
         'properties': {
-            'distance': feat[2],
-            'type':feat[3] }
+            'distance': feat[3],
+            'type':feat[4] }
         } for feat in rset
      ]
 
