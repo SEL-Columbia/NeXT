@@ -62,8 +62,8 @@ var load_page = function  (options) {
       this.flag.animate({opacity: 0}, 300, function () {this.remove();});
     }
     var distances = _.map(data, function(arr){return arr[1]}),
-    max = Math.max.apply(window, distances),
-    min = Math.min.apply(window, distances),
+    max = _.max(distances),
+    min = _.min(distances),
     range = (max-min),
     interval = range / numBars;
     
