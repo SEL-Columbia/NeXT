@@ -18,8 +18,10 @@ def main(global_config, **settings):
     config.add_route('create-scenario', '/scenario/new')
     config.add_route('show-scenario', '/scenario/{id}')
     config.add_route('run-scenario', '/scenario/{id}/run')
+
     config.add_route('graph-scenario', '/scenario/{id}/graph-data')
-    config.add_route('show-scenario-json', '/scenario/{id}/json')
+
+    config.add_route('show-population-json', '/scenario/{id}/population')
 
     config.scan()
     return config.make_wsgi_app()

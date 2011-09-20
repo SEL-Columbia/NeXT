@@ -9,6 +9,7 @@ CHANGES = open(os.path.join(here, 'CHANGES.txt')).read()
 requires = [
     'pyramid',
     'simplejson',
+    'gunicorn',
     'geojson',
     'pyyaml',
     'Shapely',
@@ -50,6 +51,7 @@ setup(name='NeXT',
 
       export-fixtures = next.commands:ExportFixtures
       import-fixtures = next.commands:ImportFixtures
+      shape-converter = next.commands:ShapefileConvert
 
       [paste.app_factory]
       main = next:main

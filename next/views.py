@@ -1,3 +1,4 @@
+from shutil import copyfileobj
 import os
 import csv
 import simplejson
@@ -9,6 +10,7 @@ from pyramid.httpexceptions import HTTPFound
 from pyramid.httpexceptions import HTTPForbidden
 
 from geoalchemy import WKTSpatialElement
+from sqlalchemy.sql import text
 
 from next.models import Scenario
 from next.models import Node
@@ -46,13 +48,17 @@ def csv_to_nodes(request, csv_file, scenario, node_type):
     # get the raw file data and write it to tmp file
     raw_file = csv_file.file
     filename = csv_file.filename
-    tmp_file_path = os.path.join('/tmp', filename)
-    tmp_file = open(tmp_file_path, 'wb')
-    tmp_file.write(raw_file.read())
-    tmp_file.close()
+
+    tmp_file = os.path.join(
+        request.registry.settings['next.temporary_folder'],
+        filename
+        )
+
+    copyfileobj(raw_file, open(tmp_file, 'wb'))
+
     # open the csv reader
     # using rU because of encoding issues with windows
-    csv_reader = csv.reader(open(tmp_file_path, 'rU'))
+    csv_reader = csv.reader(open(tmp_file, 'rU'))
     for row in csv_reader:
         geom = WKTSpatialElement('POINT(%s %s)' % (row[0], row[1]))
 
@@ -153,12 +159,35 @@ def run_scenario(request):
         location=request.route_url('show-scenario', id=scenario.id))
 
 
-@view_config(route_name='show-scenario-json')
-def show_scenario_json(request):
+@view_config(route_name='show-population-json')
+def show_population_json(request):
+    session = DBSession()
+    conn = session.connection()
     sc = get_object_or_404(Scenario, request.matchdict['id'])
-    geojson = {'type': 'FeatureCollection',
-               'features': [node.to_geojson() for node in sc.get_nodes()]}
-    return Response(simplejson.dumps(geojson), content_type='application/json')
+    sql = text('''
+    select nodes.id,
+    nodes.weight,
+    st_asgeojson(nodes.point),
+    edges.distance, nodetypes.name
+    from nodes, edges, nodetypes
+    where nodes.scenario_id = :sc_id and
+    nodes.id = edges.from_node_id and
+    nodes.node_type_id = nodetypes.id
+    ''')
+    rset = conn.execute(sql, sc_id=sc.id).fetchall()
+    feats = [
+        {
+        'type': 'Feature',
+        'geometry': simplejson.loads(feat[2]),
+        'properties': {
+            'distance': feat[3],
+            'type':feat[4] }
+        } for feat in rset
+     ]
+
+    feature_collection = {'type': 'FeatureCollection', 'features': feats }
+    return Response(simplejson.dumps(feature_collection),
+                    content_type='plain/text')
 
 
 @view_config(route_name='graph-scenario')
