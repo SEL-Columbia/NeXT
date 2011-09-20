@@ -41,6 +41,7 @@ var load_page = function  (options) {
   function graphDistances(elemId, data, title, _opts){
     var opts = _.extend({
     	numBars: 20,
+    	defaultColor: 'blue',
     	unit: 'm'
     }, _opts);
     var numBars = opts.numBars,
@@ -83,7 +84,8 @@ var load_page = function  (options) {
     var r = Raphael(elemId);
     r.g.txtattr.font = "12px 'Fontin Sans', Fontin-Sans, sans-serif";
     r.g.text(160, 10, title);
-    r.g.barchart(10, 10, 300, 220, [_.pluck(distributions, 'value')]).hover(fin, fout);
+    var gOpts = {colors: [opts.defaultColor]};
+    r.g.barchart(10, 10, 300, 220, [_.pluck(distributions, 'value')], gOpts).hover(fin, fout);
   };
   
   
