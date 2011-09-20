@@ -38,8 +38,14 @@ var load_page = function  (options) {
   map.zoomToExtent(bounds);
 
 
-  function graphDistances(elemId, data, numBars, title, unit){
-    
+  function graphDistances(elemId, data, title, _opts){
+    var opts = _.extend({
+    	numBars: 20,
+    	unit: 'm'
+    }, _opts);
+    var numBars = opts.numBars,
+        unit = opts.unit;
+
     function textForColumn(col) {
       var stxt = Math.floor(col.start),
       etxt = Math.floor(col.end);
@@ -82,8 +88,11 @@ var load_page = function  (options) {
   
   
   $.getJSON(options.graph_url, function(data){
-
-    graphDistances("holder", data, 20, " # People near facilities", "m");
+    var opts = {
+    	unit: 'm',
+    	numBars: 20
+    };
+    graphDistances("holder", data, " # People near facilities", opts);
   
   });
   
