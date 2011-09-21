@@ -22,6 +22,10 @@
      type="text/javascript" 
      src="${request.application_url}/static/show_scenario.js">
   </script>
+  <script 
+     type="text/javascript" 
+     src="${request.application_url}/static/prep_scenario.js">
+  </script>
 
   <script src="${request.application_url}/static/underscore.min.js" 
           type="text/javascript" charset="utf-8">
@@ -48,6 +52,7 @@
 
       'bbox': ${list(scenario.get_bounds().bounds)},
       'json_url' : '${request.route_url('show-population-json', id=scenario.id)}',
+      'fac_url'  : '${request.route_url('show-facility-json', id=scenario.id)}',
       'graph_url': '${request.route_url('graph-scenario', id=scenario.id)}',
       'scenario': ${scenario.id}
     });

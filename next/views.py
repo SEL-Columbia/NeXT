@@ -18,13 +18,26 @@ from next.models import NodeType
 from next.models import DBSession
 
 
-def get_object_or_404(cls, id):
+def get_object_or_404(cls, request):
     session = DBSession()
+    id = request.matchdict.get('id', None)
+    if id is None:
+        raise NameError('You have id in your request matchdict')
     obj = session.query(cls).get(id)
     if obj is not None:
         return obj
     else:
         raise HTTPNotFound('Unable to locate class:%s id:%s' % (cls, id))
+
+
+def json_response(data):
+    return Response(simplejson.dumps(data),
+                    content_type='application/json')
+
+
+def get_node_type(type):
+    session = DBSession()
+    return session.query(NodeType).filter_by(name=unicode(type)).first()
 
 
 @view_config(route_name='index', renderer='index.mako')
@@ -88,11 +101,9 @@ def create_scenario(request):
     if request.method == 'POST':
 
         # query for the two node types we are currently using.
-        pop_type = session.query(NodeType)\
-            .filter_by(name=u'population').first()
 
-        fac_type = session.query(NodeType)\
-            .filter_by(name=u'facility').first()
+        pop_type = get_node_type('population')
+        fac_type = get_node_type('facility')
 
         # TODO remove these asserts
         assert pop_type
@@ -163,7 +174,7 @@ def run_scenario(request):
 def show_population_json(request):
     session = DBSession()
     conn = session.connection()
-    sc = get_object_or_404(Scenario, request.matchdict['id'])
+    sc = get_object_or_404(Scenario, request)
     sql = text('''
     select nodes.id,
     nodes.weight,
@@ -184,23 +195,27 @@ def show_population_json(request):
             'type':feat[4] }
         } for feat in rset
      ]
+    return json_response({'type': 'FeatureCollection', 'features': feats })
 
-    feature_collection = {'type': 'FeatureCollection', 'features': feats }
-    return Response(simplejson.dumps(feature_collection),
-                    content_type='plain/text')
+
+@view_config(route_name='show-facility-json')
+def show_facility_json(request):
+    sc = get_object_or_404(Scenario, request)
+    nodes = sc.get_nodes().filter_by(node_type=get_node_type('facility'))
+    return json_response(
+        {'type': 'FeatureCollection',
+         'features': [feat.to_geojson() for feat in nodes]}
+        )
 
 
 @view_config(route_name='graph-scenario')
 def graph_scenario(request):
-    sc = get_object_or_404(Scenario, request.matchdict['id'])
-    data = map(list, sc.get_population_vs_distance())
-    return Response(
-        simplejson.dumps(data),
-        content_type='application/json')
+    sc = get_object_or_404(Scenario, request)
+    return json_response(map(list, sc.get_population_vs_distance()))
 
 
 @view_config(route_name='show-scenario', renderer='show-scenario.mako')
 def show_scenario(request):
     """
     """
-    return {'scenario': get_object_or_404(Scenario, request.matchdict['id'])}
+    return {'scenario': get_object_or_404(Scenario, request)}

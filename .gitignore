@@ -9,3 +9,5 @@
 
 /geojson-1.0.1-py2.7.egg
 /gunicorn-0.13.2-py2.7.egg/*
+/next/static/openlayers/*
+/next/static/bootstrap/*

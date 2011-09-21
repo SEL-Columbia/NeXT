@@ -22,6 +22,7 @@ def main(global_config, **settings):
     config.add_route('graph-scenario', '/scenario/{id}/graph-data')
 
     config.add_route('show-population-json', '/scenario/{id}/population')
+    config.add_route('show-facility-json', 'scenario/{id}/facilities')
 
     config.scan()
     return config.make_wsgi_app()

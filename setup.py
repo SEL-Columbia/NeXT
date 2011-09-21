@@ -13,7 +13,6 @@ requires = [
     'geojson',
     'pyyaml',
     'Shapely',
-    'rtree',
     'geoalchemy',
     'colander',
     'deform',

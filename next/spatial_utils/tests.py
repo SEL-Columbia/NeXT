@@ -1,6 +1,6 @@
 import unittest
 import util
-import numpy
+
 
 class TestUtil(unittest.TestCase):
 
@@ -57,7 +57,8 @@ class TestUtil(unittest.TestCase):
 
     def test_large_find(self):
         qt = util.QuadTree(20, [0, 0], [10000, 10000])
-   
+       
+        import numpy
         to_x = numpy.random.rand(1000) * 10000
         to_y = numpy.random.rand(1000) * 10000
         to_pts = numpy.column_stack((to_x, to_y))

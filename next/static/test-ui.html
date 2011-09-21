@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8" />
+	<title>QUnit Test Suite</title>
+	<link rel="stylesheet" href="/static/qunit.css" type="text/css" media="screen">
+	<script src="/static/jquery.min.js" type="text/javascript" charset="utf-8"></script>
+	<script src="/static/underscore.min.js" type="text/javascript" charset="utf-8"></script>
+	<script src="/static/underscore.min.js" type="text/javascript" charset="utf-8"></script>
+	<script src="/static/qunit.js" type="text/javascript" charset="utf-8"></script>
+	<script src="/static/prep_scenario.js" type="text/javascript" charset="utf-8"></script>
+	<script src="/static/raphael.min.js" type="text/javascript" charset="utf-8">
+  	</script>
+
+  	<script src="/static/g.raphael-min.js" type="text/javascript" charset="utf-8">
+	</script>
+
+	<script src="/static/g.bar-min.js" type="text/javascript" charset="utf-8">
+	</script>
+
+	<script type="text/javascript" charset="utf-8">
+
+	var expected = [{"start":0,"end":257.65,"value":3},{"start":257.65,"end":515.3,"value":7},{"start":515.3,"end":772.9499999999999,"value":8},{"start":772.9499999999999,"end":1030.6,"value":8},{"start":1030.6,"end":1288.25,"value":3},{"start":1288.25,"end":1545.8999999999999,"value":4},{"start":1545.8999999999999,"end":1803.5499999999997,"value":4},{"start":1803.5499999999997,"end":2061.2,"value":4},{"start":2061.2,"end":2318.85,"value":3},{"start":2318.85,"end":2576.5,"value":2},{"start":2576.5,"end":2834.1499999999996,"value":3},{"start":2834.1499999999996,"end":3091.7999999999997,"value":3},{"start":3091.7999999999997,"end":3349.45,"value":2},{"start":3349.45,"end":3607.0999999999995,"value":3},{"start":3607.0999999999995,"end":3864.7499999999995,"value":1},{"start":3864.7499999999995,"end":4122.4,"value":0},{"start":4122.4,"end":4380.049999999999,"value":0},{"start":4380.049999999999,"end":4637.7,"value":1},{"start":4637.7,"end":4895.349999999999,"value":1},{"start":4895.349999999999,"end":5153,"value":2}];
+	var sampleData = [[1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 0], [1, 15], [1, 93], [1, 207], [1, 303], [1, 348], [1, 359], [1, 423], [1, 425], [1, 467], [1, 484], [1, 564], [1, 604], [1, 681], [1, 716], [1, 723], [1, 726], [1, 730], [1, 759], [1, 829], [1, 854], [1, 871], [1, 910], [1, 919], [1, 938], [1, 960], [1, 1020], [1, 1172], [1, 1232], [1, 1284], [1, 1416], [1, 1497], [1, 1536], [1, 1542], [1, 1590], [1, 1609], [1, 1651], [1, 1724], [1, 1971], [1, 1980], [1, 2020], [1, 2042], [1, 2082], [1, 2267], [1, 2273], [1, 2360], [1, 2478], [1, 2643], [1, 2730], [1, 2774], [1, 3040], [1, 3045], [1, 3056], [1, 3175], [1, 3233], [1, 3503], [1, 3540], [1, 3587], [1, 3820], [1, 4613], [1, 4749], [1, 5048], [1, 5130], [1, 5153]];
+	
+	module("our stuff", {
+		setup: function(){
+			if($('div#test-wrap').length===0) {
+				this.wrap = $('<div />')
+					.attr('id', 'test-wrap')
+					.appendTo('body');
+			} else {
+				this.wrap = $('div#test-wrap')
+			}
+			this.preserve = false;
+		},
+		teardown: function(){
+			if(this.preserve) {
+				this.wrap.empty()
+						.remove();
+			} else {
+				this.wrap.attr('id', _.uniqueId('wrap'))
+			}
+		}
+	})
+	
+	test("Distributions are done correctly.", function(){
+		var distribs = calculateDistribution(sampleData);
+		deepEqual(expected, distribs, "calculateDistribution(rawData) works")
+	});
+	
+	test("Graphael what it needs to", function(){
+		var distribs = calculateDistribution(sampleData);
+		buildGraph("test-wrap", distribs, "Our Graph");
+	});
+	
+	test("Graphael works")
+
+
+	</script>
+</head>
+<body>
+	<h1 id="qunit-header">QUnit Test Suite</h1>
+	<h2 id="qunit-banner"></h2>
+	<div id="qunit-testrunner-toolbar"></div>
+	<h2 id="qunit-userAgent"></h2>
+	<ol id="qunit-tests"></ol>
+	<div id="qunit-fixture">test markup</div>
+</body>
+</html>
