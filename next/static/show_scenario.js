@@ -1,4 +1,6 @@
-
+/*
+#C7E9B4; #7FCDBB; #41B6C4; #1D91C0; #0C2C84
+*/
 
 var load_page = function  (options) {
 
@@ -8,8 +10,14 @@ var load_page = function  (options) {
     
     var gsat = new OpenLayers.Layer.Google(
       "Google Satellite",
-      {type: google.maps.MapTypeId.TERRAIN, numZoomLevels: 22}
+      {type: google.maps.MapTypeId.SATELLITE, numZoomLevels: 22}
     ); 
+
+    var gphy = new OpenLayers.Layer.Google(
+      "Google Physical",
+      {type: google.maps.MapTypeId.TERRAIN, numZoomLevels: 22}
+    );
+
     
     var style = new OpenLayers.Style({
       'stroke': true,
@@ -24,21 +32,41 @@ var load_page = function  (options) {
     }),
       symbolizer: {
         pointRadius: 4, 
-        fillColor: "green",
-        strokeColor: "black"}
+        fillColor: "#c7e9b4",
+        strokeColor: "black",
+        strokeOpacity: 0.2
+      }
     });
     
-    var ruleMiddle = new OpenLayers.Rule({
+    var ruleMiddle1 = new OpenLayers.Rule({
       filter: new OpenLayers.Filter.Comparison({
         type: OpenLayers.Filter.Comparison.BETWEEN,
         property: "distance",
         lowerBoundary: 1000,
+        upperBoundary: 1999
+      }),
+      symbolizer: {
+        pointRadius: 4,
+        fillColor: "#7fcdbb",
+        strokeColor: "black",
+        strokeOpacity: .2
+      }
+    });
+
+    
+    var ruleMiddle2 = new OpenLayers.Rule({
+      filter: new OpenLayers.Filter.Comparison({
+        type: OpenLayers.Filter.Comparison.BETWEEN,
+        property: "distance",
+        lowerBoundary: 2000,
         upperBoundary: 3999
       }),
       symbolizer: {
         pointRadius: 4,
-        fillColor: "orange",
-        strokeColor: "black"}
+        fillColor: "#1D91C0",
+        strokeColor: "black",
+        strokeOpacity: .2
+      }
     });
     
     var ruleHigh = new OpenLayers.Rule({ 
@@ -49,12 +77,13 @@ var load_page = function  (options) {
     }),
       symbolizer: { 
         pointRadius: 4,
-        fillColor: "red",
-        strokeColor: "black"
+        fillColor: "#0C2C84",
+        strokeColor: "black",
+        strokeOpacity: .2
       }
     });
     
-    style.addRules([ruleLow, ruleMiddle]);
+    style.addRules([ruleLow, ruleMiddle1, ruleMiddle2, ruleHigh]);
     
     var nodes = new OpenLayers.Layer.Vector('nodes', {
       strategies: [new OpenLayers.Strategy.Fixed()],
@@ -65,7 +94,11 @@ var load_page = function  (options) {
         
       })
     });
-    var fac_style = new OpenLayers.Style({}) ;
+
+    var fac_style = new OpenLayers.Style({
+      pointRadius: 6,
+      fillColor: '#5e0f56',
+    });
 
     var fac_nodes = new OpenLayers.Layer.Vector('pop-nodes', { 
       strategies: [new OpenLayers.Strategy.Fixed()],
@@ -75,13 +108,18 @@ var load_page = function  (options) {
         format: new OpenLayers.Format.GeoJSON()
       })
     });
-
+    
     map.addLayer(gsat);
+    map.addLayer(gphy);
     map.addLayer(nodes);
+    map.addLayer(fac_nodes);
+
+
     var bounds = new OpenLayers.Bounds.fromArray(options.bbox);
     map.zoomToExtent(bounds);
+    map.addControl(new OpenLayers.Control.LayerSwitcher());
 
-  })();
+  }());
   
   $.getJSON(options.graph_url, function(data){
     var opts = {
@@ -90,9 +128,10 @@ var load_page = function  (options) {
     	//distColors is an optional list of color/value mappings
     	distColors: [
     	//   color, max, description
-                ['green', 1000, "Under 1km"],
-                ['orange', 5000, "Under 5km"],
-                ['red', Infinity, "Greater than 5km"]
+                ['#c7e9b4', 1000, 'Under 1km'],
+                ['#7fcdbb', 2000, 'Under 4km'],
+                ['#41b6c4', 3000, 'Under 3km'],
+                ['#0c2c84', Infinity, "Greater than 4km"]
     	]
     };
     var distributionData = calculateDistribution(data);

@@ -146,7 +146,7 @@ def run_scenario(request):
     import importlib
     session = DBSession()
     # get the scenario
-    scenario = get_object_or_404(Scenario, request.matchdict['id'])
+    scenario = get_object_or_404(Scenario, request)
 
     pop_type = session.query(NodeType).filter_by(name=u'population').first()
     fac_type = session.query(NodeType).filter_by(name=u'facility').first()
