@@ -6,7 +6,9 @@ var load_page = function  (options) {
 
   (function() { 
 
-    var map = new OpenLayers.Map(options.mapDiv, {allOverlays: true});
+    var map = new OpenLayers.Map(
+      options.mapDiv, 
+      {allOverlays: true, controls: []});
     
     var gsat = new OpenLayers.Layer.Google(
       "Google Satellite",
@@ -118,7 +120,7 @@ var load_page = function  (options) {
     var bounds = new OpenLayers.Bounds.fromArray(options.bbox);
     map.zoomToExtent(bounds);
     map.addControl(new OpenLayers.Control.LayerSwitcher());
-
+    map.addControl(new OpenLayers.Control.Navigation());
   }());
   
   $.getJSON(options.graph_url, function(data){

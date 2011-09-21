@@ -46,6 +46,14 @@ def index(request):
     return {'scenarios': session.query(Scenario).all()}
 
 
+@view_config(route_name='show-all-scenarios')
+def show_all(request):
+    session = DBSession()
+    scs = session.query(Scenario).all()
+    return json_response({'type': 'FeatureCollection',
+                          'features': [sc.to_geojson() for sc in scs]})
+
+
 def csv_to_nodes(request, csv_file, scenario, node_type):
     """Function to read a csv file and add the contents of a csv file to
     the nodes table.

@@ -50,6 +50,15 @@ class Scenario(Base):
         session = DBSession()
         return session.query(Node).filter_by(scenario=self)
 
+    def to_geojson(self):
+        bounds = self.get_bounds(srid=4326)
+        return {'type': 'Feature',
+                'properties': {'id': self.id},
+                'geometry':
+                {'type': 'LineString',
+                 'coordinates': list(bounds.exterior.coords)
+                 }}
+
     def get_bounds(self, srid=900913):
         """
         Method to find the bound box for a scenario.
