@@ -35,10 +35,11 @@ class QuadTree:
     """class representing a point QuadTree with a maximum
        number of points per leaf, sw & ne coords, and an 
        optional function to convert the object into a point array."""
-    def __init__(self, per_leaf, sw, ne, pt_fun=None):
+    def __init__(self, per_leaf, sw, ne, pt_fun=None, spherical=False):
         self.per_leaf = per_leaf
         self.root = self.QuadNode(sw, ne)
 	self.pt_fun = pt_fun
+	self.spherical = spherical
 
 
     class PointObj:
@@ -135,7 +136,7 @@ class QuadTree:
         """ Find the nearest point by finding the quad_node
 	    it would be added to (handling all corner cases)."""
 	if not quad_node.quads:
-	    return get_nearest_point(pt, quad_node.points)
+	    return get_nearest_point(pt, quad_node.points, self.spherical)
 	else:
 	    cur_pt = None
 	    cur_dist = float("inf")
@@ -143,7 +144,7 @@ class QuadTree:
 	    if(quad_ind != -1):
 		cand_pt = self._find_nearest(pt, quad_node.quads[quad_ind])
 		if not (cand_pt is None):
-        	    cand_dist = point_dist(pt, cand_pt)
+        	    cand_dist = point_dist(pt, cand_pt, self.spherical)
         	    if(cand_dist < cur_dist):
         	        cur_dist = cand_dist
         	        cur_pt = cand_pt
@@ -155,13 +156,13 @@ class QuadTree:
 		cand_inds.remove(quad_ind)
 
 	    cand_quads = [quad_node.quads[i] for i in cand_inds]
-	    cand_quads.sort(lambda a, b:  cmp(get_dist_to_bounds(pt, a.bounds), get_dist_to_bounds(pt, b.bounds)))
+	    cand_quads.sort(lambda a, b:  cmp(get_dist_to_bounds(pt, a.bounds, self.spherical), get_dist_to_bounds(pt, b.bounds, self.spherical)))
 	    for cand_q in cand_quads:
-		pt_bnd_dist = get_dist_to_bounds(pt, cand_q.bounds)
+		pt_bnd_dist = get_dist_to_bounds(pt, cand_q.bounds, self.spherical)
 		if (pt_bnd_dist < cur_dist):
 		    cand_pt = self._find_nearest(pt, cand_q)
 		    if not (cand_pt is None):
-		        cand_dist = point_dist(pt, cand_pt)
+		        cand_dist = point_dist(pt, cand_pt, self.spherical)
     		        if (cand_dist < cur_dist):
     			    cur_dist = cand_dist
     			    cur_pt = cand_pt
@@ -177,16 +178,19 @@ def get_containing_quad(pt, quads):
 
    return -1
 
-def point_dist(pt1, pt2):
+def point_dist(pt1, pt2, spherical=False):
     diff_x = pt1[0] - pt2[0]
     diff_y = pt1[1] - pt2[1]
+    if(spherical):
+	diff_x = diff_x * abs(math.cos(((pt1[1] + pt2[1]) / 2) * (math.pi / 180))) # * (math.pi / 90)))
+
     return math.sqrt((diff_x * diff_x) + (diff_y * diff_y))
 
-def get_nearest_point(pt, pt_list):
+def get_nearest_point(pt, pt_list, spherical=False):
     cur_dist = float("inf")
     cur_pt = None
     for cand_pt in pt_list:
-	cand_dist = point_dist(pt, cand_pt)
+	cand_dist = point_dist(pt, cand_pt, spherical)
 	if cand_dist < cur_dist:
 	    cur_dist = cand_dist
 	    cur_pt = cand_pt
@@ -194,20 +198,30 @@ def get_nearest_point(pt, pt_list):
     return cur_pt
 
 
-def get_dist_to_bounds(pt, bounds):
+def get_dist_to_bounds(pt, bounds, spherical=False):
     """ return the distance from the point to the closest intersecting 
         point along the perimeter of bounds. """
+
+    if(spherical):
+	lat_lon_ratio = abs(math.cos(pt[1] * (math.pi / 180))) # * (math.pi / 90))))
+	x_min_diff = abs(pt[0] - bounds.min_x) * lat_lon_ratio
+	x_max_diff = abs(pt[0] - bounds.max_x) * lat_lon_ratio
+    else:
+        x_min_diff = abs(pt[0] - bounds.min_x)
+        x_max_diff = abs(pt[0] - bounds.max_x)
+
+    
     if (contains(pt, bounds)):
 	return min([abs(pt[1] - bounds.min_y), 
-	            abs(pt[1] - bounds.max_y), 
-	            abs(pt[0] - bounds.min_x), 
+	            x_max_diff,
+		    x_min_diff,
 	            abs(pt[0] - bounds.max_x)])
     elif (bounds.min_x <= pt[0] <= bounds.max_x):
 	return min([abs(pt[1] - bounds.min_y), abs(pt[1] - bounds.max_y)])
     elif (bounds.min_y <= pt[1] <= bounds.max_y):
-	return min([abs(pt[0] - bounds.min_x), abs(pt[0] - bounds.max_x)])
+	return min([x_min_diff, x_max_diff])
     else:
-	return point_dist(pt, get_nearest_point(pt, bounds.get_corners()))
+	return point_dist(pt, get_nearest_point(pt, bounds.get_corners(), spherical), spherical)
     
 
 def contains(pt, bounds):
