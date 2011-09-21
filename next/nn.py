@@ -49,7 +49,7 @@ def generate_nearest_neighbor(scenario, pop_nodes, facility_nodes):
             scenario,
             pop_node,
             nearest,
-            computeSphericalDistance(pop_geometry, fac_geometry))
+            nearestDist)
 
         edges.append(edge)
 
