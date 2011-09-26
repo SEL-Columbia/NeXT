@@ -128,5 +128,5 @@ class ShapefileConvert(Command):
             f = layer.GetFeature(i)
             geometry = f.GetGeometryRef()
             geometry.TransformTo(sp)
-            print geometry.ExportToWkt()
-            #print '%s, %s' % (geometry.GetX(), geometry.GetY())
+            #print geometry.ExportToWkt()
+            print '%s, %s' % (geometry.GetX(), geometry.GetY())
