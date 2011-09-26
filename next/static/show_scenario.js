@@ -126,7 +126,7 @@ var load_page = function  (options) {
   $.getJSON(options.graph_url, function(data){
     var opts = {
     	unit: 'm',
-    	numBars: 20,
+        numBars: 20,
     	//distColors is an optional list of color/value mappings
     	distColors: [
     	//   color, max, description

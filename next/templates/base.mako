@@ -24,9 +24,11 @@
   <body>
 
      <div class="container">
-       <h1><a href="/">NeXT</a></h1>
-       <hr />
-       ${self.body()}
+       <div class="content">
+         <h1><a href="${request.application_url}">NeXT</a></h1>
+         <hr />
+         ${self.body()}         
+       </div>
      </div>
 
   </body>

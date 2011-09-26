@@ -68,7 +68,7 @@
 
   <br />
 
-  <div id="scenario-map" class="span16" style="height: 600px;padding-top: 10px;">    
+  <div id="scenario-map" class="span16" style="height: 300px;padding-top: 10px;">    
   </div>
 
   <div class="row">
