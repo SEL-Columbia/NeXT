@@ -53,6 +53,7 @@
         'json_url' : '${request.route_url('show-population-json', id=scenario.id)}',
         'fac_url'  : '${request.route_url('show-facility-json', id=scenario.id)}',
         'graph_url': '${request.route_url('graph-scenario', id=scenario.id)}',
+        'new_node_url': '${request.route_url('add-new-nodes', id=scenario.id)}',
         'scenario': ${scenario.id}
       });
     });
@@ -65,32 +66,30 @@
   <h3>Results for: ${scenario.name}</h3>
   <br />
   <div class="row">
-    <div class="span3">
+    <div class="span8">      
+
       <a class="btn" href="${request.route_url('remove-scenario',id=scenario.id)}">
-         Remove scenario
+        Remove scenario
       </a>
-    </div>
-    <div class="span3">
       <a href="#" class="btn" id="add-facility">Add new facility</a>
       <a class="btn" id="stop-editing" href="#" style="display:none">Stop editing</a>
-    </div>
-    <div class="span3">
       <a id="run-scenario" class="btn disabled" href="#">Re-run scenario</a>
+
+    </div>
+    <div class="span7"> 
+      <span id="number-features" 
+            class="alert-message success
+                   block-message">
+      </span>      
     </div>
   </div>
-  <hr />
-  <div class="row">
-    <div id="number-features"
-         class="alert-message block-message info span12">
-     </div>
-  </div>
-
   <br /> 
 
   <div class="row">
     <div id="scenario-map" 
          class="span16" 
          style="height: 300px;padding-top: 10px;">    
+
     </div>
   </div>
 
@@ -99,11 +98,11 @@
       <br />
       <form method="" action="">
         <fieldset>
-          <label>Distance</label>
+          <label>Population within</label>
           <input type="text" name="distance" value="" />
         </fieldset>
         <fieldset>
-          <input type="submit" name="" value="How many people within"/>
+          <input type="submit" class="btn" name="" value="How many people within"/>
         </fieldset>
       </form>
     </div>

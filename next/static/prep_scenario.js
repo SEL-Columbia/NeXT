@@ -25,7 +25,7 @@ function calculateDistribution(rawData, _opts) {
 }
 
 function buildGraph(id, distributions, title, _opts) {
-    log(distributions);
+
     var opts = _.extend({
     	numBars: 20,
     	defaultColor: 'blue',

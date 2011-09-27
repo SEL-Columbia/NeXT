@@ -140,7 +140,7 @@ var load_page = function  (options) {
     function update_feature_counter(event) { 
       var number = new_nodes.features.length;
       console.log(number);
-      $('#number-features').html('You have added ' + number + ' nodes to your facilities');
+      $('#number-features').html('You have added ' + number + ' node(s) to your facilities');
     }; 
     
     new_nodes.events.on({ 
@@ -149,7 +149,7 @@ var load_page = function  (options) {
 
     var stop = $('#stop-editing'); 
     var edit = $('#add-facility');
-    var run  = $('run-scenario');
+    var run  = $('#run-scenario');
 
     edit.click(function() {
       edit_control.activate();
@@ -165,10 +165,46 @@ var load_page = function  (options) {
       
       if (new_nodes.features.length !==0 ) {         
         $('#run-scenario').removeClass('disabled');        
-      }
-      
+      }      
     });
     
+    run.click(function() { 
+      var runp = confirm('Re-running casuse you to lose your original data, still re-run?');
+      if (runp) {  
+        // steps
+        // sycn new data with old facility datasets via post
+        // call the run url for the scenario
+        // route user to new scenario page.
+        var features = _.map(
+          new_nodes.features, 
+          function(feature) { 
+            var geometry = feature.geometry.transform(
+              new OpenLayers.Projection('EPSG:900913'),
+              new OpenLayers.Projection('EPSG:4326')
+            );
+            
+            return {x: geometry.x, y: geometry.y};            
+          }
+        )
+
+        $.ajax({
+          type: 'POST',
+          url: options.new_node_url,
+          data: JSON.stringify(features),
+          contentType: 'application/json; charset=utf-8',
+          success: function(data) { 
+            window.location = '/scenario/' + options.scenario + '/run' ;
+          },         
+        });
+
+        console.log(features);
+
+      } else { 
+        // do nothing
+      }
+     
+    })
+
   }());
 
 
