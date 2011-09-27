@@ -196,9 +196,6 @@ var load_page = function  (options) {
             window.location = '/scenario/' + options.scenario + '/run' ;
           },         
         });
-
-        console.log(features);
-
       } else { 
         // do nothing
       }
@@ -207,6 +204,27 @@ var load_page = function  (options) {
 
   }());
 
+
+  function find_percent_within() { 
+    var txt = "% people within";
+    $.ajax({
+      type: 'POST',
+      url: options.percent_within,
+      data: JSON.stringify({'d': $('#distance').val() }),
+      contentType: 'application/json; charset=utf-8',
+      success: function(data) { 
+        var pct = Math.floor(data.total * 100) / 100;
+        $('#percent').text(data.total);
+      }
+      
+    })
+    
+  }; 
+
+  find_percent_within();
+  $('#distance').change(function() { 
+    find_percent_within();
+  })
 
   
   $.getJSON(options.graph_url, function(data){

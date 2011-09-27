@@ -17,6 +17,7 @@ from next.models import Node
 from next.models import Edge
 from next.models import NodeType
 from next.models import DBSession
+from next.models import get_node_type
 
 
 def get_object_or_404(cls, request):
@@ -34,11 +35,6 @@ def get_object_or_404(cls, request):
 def json_response(data):
     return Response(simplejson.dumps(data),
                     content_type='application/json')
-
-
-def _get_node_type(type):
-    session = DBSession()
-    return session.query(NodeType).filter_by(name=unicode(type)).first()
 
 
 @view_config(route_name='index', renderer='index.mako')
@@ -111,8 +107,8 @@ def create_scenario(request):
 
         # query for the two node types we are currently using.
 
-        pop_type = _get_node_type('population')
-        fac_type = _get_node_type('facility')
+        pop_type = get_node_type('population')
+        fac_type = get_node_type('facility')
 
         # TODO remove these asserts
         assert pop_type
@@ -214,7 +210,7 @@ def show_population_json(request):
 @view_config(route_name='show-facility-json')
 def show_facility_json(request):
     sc = get_object_or_404(Scenario, request)
-    nodes = sc.get_nodes().filter_by(node_type=_get_node_type('facility'))
+    nodes = sc.get_nodes().filter_by(node_type=get_node_type('facility'))
     return json_response(
         {'type': 'FeatureCollection',
          'features': [feat.to_geojson() for feat in nodes]}
@@ -234,12 +230,22 @@ def show_scenario(request):
     return {'scenario': get_object_or_404(Scenario, request)}
 
 
+@view_config(route_name='find-pop-within')
+def find_pop_with(request):
+    sc = get_object_or_404(Scenario, request)
+    distance = request.json_body.get('d', 1000)
+
+    return json_response(
+        {'total': sc.get_percent_within(distance)}
+        )
+
+
 @view_config(route_name='add-new-nodes')
 def add_new_nodes(request):
     session = DBSession()
     sc = get_object_or_404(Scenario, request)
     new_nodes = []
-    facility_type = _get_node_type('facility')
+    facility_type = get_node_type('facility')
     for new_node in request.json_body:
         geom = WKTSpatialElement(
             'POINT(%s %s)' % (new_node['x'], new_node['y'])

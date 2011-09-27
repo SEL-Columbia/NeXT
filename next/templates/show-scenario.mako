@@ -54,6 +54,7 @@
         'fac_url'  : '${request.route_url('show-facility-json', id=scenario.id)}',
         'graph_url': '${request.route_url('graph-scenario', id=scenario.id)}',
         'new_node_url': '${request.route_url('add-new-nodes', id=scenario.id)}',
+        'percent_within': '${request.route_url('find-pop-within', id=scenario.id)}',
         'scenario': ${scenario.id}
       });
     });
@@ -94,19 +95,17 @@
   </div>
 
   <div class="row">
-    <div class="span-one-third">
+    <div class="span8">
       <br />
       <form method="" action="">
+        <p>Percent of population within</p>
         <fieldset>
-          <label>Population within</label>
-          <input type="text" name="distance" value="" />
-        </fieldset>
-        <fieldset>
-          <input type="submit" class="btn" name="" value="How many people within"/>
+          <input id="distance" type="text" name="distance" value="1000" />
         </fieldset>
       </form>
+      <h2 id="percent"></h2>
     </div>
-    <div class="span-two-third" id="holder"></div>
+    <div class="span7" id="holder"></div>
   </div>
 
 </%def>

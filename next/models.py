@@ -20,11 +20,16 @@ from sqlalchemy.orm import scoped_session
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import text
-
+from sqlalchemy.sql import func
 from zope.sqlalchemy import ZopeTransactionExtension
 
 DBSession = scoped_session(sessionmaker(extension=ZopeTransactionExtension()))
 Base = declarative_base()
+
+
+def get_node_type(type):
+    session = DBSession()
+    return session.query(NodeType).filter_by(name=unicode(type)).first()
 
 
 class Scenario(Base):
@@ -49,6 +54,34 @@ class Scenario(Base):
     def get_nodes(self):
         session = DBSession()
         return session.query(Node).filter_by(scenario=self)
+
+    def get_total_population(self):
+        """
+        select sum(nodes.weight) from nodes where ...
+        """
+        session = DBSession()
+        total = session.query(func.sum(Node.weight))\
+            .filter_by(scenario=self)\
+            .filter_by(node_type=get_node_type('population'))
+        return float(total[0][0])
+
+    def get_total_population_within(self, d):
+        """
+        """
+        session = DBSession()
+        total = session.query(func.sum(Node.weight)).join(
+            Edge, Node.id == Edge.from_node_id)\
+            .filter(Node.scenario_id == self.id)\
+            .filter(Edge.distance <= d)\
+            .filter(Node.node_type == get_node_type('population'))
+        print '------------------------------'
+        print total
+        return float(total[0][0])
+
+    def get_percent_within(self, d):
+        total = self.get_total_population()
+        subset = self.get_total_population_within(d)
+        return subset / total
 
     def to_geojson(self):
         bounds = self.get_bounds(srid=4326)
