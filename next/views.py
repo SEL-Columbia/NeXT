@@ -227,3 +227,13 @@ def show_scenario(request):
     """
     """
     return {'scenario': get_object_or_404(Scenario, request)}
+
+
+@view_config(route_name='remove-scenario', renderer='remove-scenario.mako')
+def remove_scenario(request):
+    session = DBSession()
+    sc = get_object_or_404(Scenario, request)
+    [session.delete(node) for node in sc.get_nodes()]
+    [session.delete(edge) for edge in sc.get_edges()]
+    session.delete(sc)
+    return HTTPFound(location=request.route_url('index'))
