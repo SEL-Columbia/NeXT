@@ -83,29 +83,32 @@ class Scenario(Base):
            order by edges.distance ''')
         rset = conn.execute(sql, sc_id=self.id).fetchall()
         return rset
-    
+
     def get_partitioned_pop_vs_dist(self, num_partitions=5):
         session = DBSession()
         conn = session.connection()
         sql = text(
         '''
         select sum(weight) weight, p.distance
-          from 
-          (select weight, e.distance 
-            from edges e, nodes n 
-            where n.node_type_id=1 and 
+          from
+          (select weight, e.distance
+            from edges e, nodes n
+            where n.node_type_id=1 and
             e.from_node_id=n.id and
             e.scenario_id = :sc_id) pop_dist,
           (select distance from generate_series(
-                    (select min(distance) from edges), 
+                    (select min(distance) from edges),
                     (select max(distance) from edges),
-                    (select (max(distance) - min(distance)) / :num_parts from edges)) 
+                    (select (max(distance) - min(distance)) / :num_parts from edges))
                     as distance) p
           where pop_dist.distance <= p.distance
           group by p.distance
           order by p.distance
         ''')
-        rset = conn.execute(sql, sc_id=self.id, num_parts=num_partitions).fetchall()
+        rset = conn.execute(
+            sql,
+            sc_id=self.id,
+            num_parts=num_partitions).fetchall()
         return rset
 
 
