@@ -1,5 +1,6 @@
-body { 
+html, body { 
   background: #eee;
+  padding-top: 30px;
 } 
 .content  { 
   background: #fff;
@@ -19,3 +20,6 @@ form label {
   padding: 5px;
 }
 
+#scenario-map { 
+    background: #eee;
+} 

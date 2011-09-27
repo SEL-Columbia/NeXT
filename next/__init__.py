@@ -19,6 +19,7 @@ def main(global_config, **settings):
     config.add_route('create-scenario', '/scenario/new')
     config.add_route('show-scenario', '/scenario/{id}')
     config.add_route('run-scenario', '/scenario/{id}/run')
+    config.add_route('remove-scenario', 'scenario/{id}/remove')
 
     config.add_route('graph-scenario', '/scenario/{id}/graph-data')
 

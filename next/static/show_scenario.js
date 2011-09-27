@@ -1,6 +1,7 @@
 /*
 #C7E9B4; #7FCDBB; #41B6C4; #1D91C0; #0C2C84
 */
+var new_nodes;
 
 var load_page = function  (options) {
 
@@ -121,7 +122,56 @@ var load_page = function  (options) {
     map.zoomToExtent(bounds);
     map.addControl(new OpenLayers.Control.LayerSwitcher());
     map.addControl(new OpenLayers.Control.Navigation());
+    map.addControl(new OpenLayers.Control.MousePosition());
+
+    // new layer to allow users to add new points
+    new_nodes = new OpenLayers.Layer.Vector();
+    map.addLayer(new_nodes);
+
+    // add control to allow users to add a new point
+
+    var edit_control = new OpenLayers.Control.DrawFeature(
+      new_nodes,
+      OpenLayers.Handler.Point
+    ); 
+    
+    map.addControl(edit_control);
+
+    function update_feature_counter(event) { 
+      var number = new_nodes.features.length;
+      console.log(number);
+      $('#number-features').html('You have added ' + number + ' nodes to your facilities');
+    }; 
+    
+    new_nodes.events.on({ 
+      sketchcomplete: update_feature_counter
+    })
+
+    var stop = $('#stop-editing'); 
+    var edit = $('#add-facility');
+    var run  = $('run-scenario');
+
+    edit.click(function() {
+      edit_control.activate();
+      $(this).css('display', 'none') ; 
+      stop.css('display', 'inline');
+      
+    });
+
+    stop.click(function() { 
+      $(this).css('display', 'none');
+      edit.css('display', 'inline');
+      edit_control.deactivate(); 
+      
+      if (new_nodes.features.length !==0 ) {         
+        $('#run-scenario').removeClass('disabled');        
+      }
+      
+    });
+    
   }());
+
+
   
   $.getJSON(options.graph_url, function(data){
     var opts = {
