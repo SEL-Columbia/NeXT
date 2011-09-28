@@ -123,6 +123,7 @@ var load_page = function  (options) {
     map.addControl(new OpenLayers.Control.Navigation());
   }());
   
+  /*
   $.getJSON(options.graph_url, function(data){
     var opts = {
     	unit: 'm',
@@ -139,6 +140,28 @@ var load_page = function  (options) {
     var distributionData = calculateDistribution(data);
     buildGraph('holder', distributionData, " # People near facilities2", opts);
   });
-  
+  */
 
+  $.getJSON(options.graph_cumul_url, function(data){
+    var x = 0;
+
+    var xyVals = _.map(data, function(tup) { return [tup[0] * 100, tup[1]]; });
+    var maxY = Math.max.apply(null, _.map(data, function(tup) { return tup[1]; }));
+    var distColors = [
+      //   color, max, description
+      ['#c7e9b4', 1000, 'Under 1km'],
+      ['#7fcdbb', 2000, 'Under 2km'],
+      ['#41b6c4', 3000, 'Under 3km'],
+      ['#0c2c84', Infinity, "Under " + (maxY / 1000) + "km"]
+   	];
+
+	var r = Raphael('holder');
+	r.g.txtattr.font = "12px 'Fontin Sans', Fontin-Sans, sans-serif";
+	r.g.text(20, 20, "Meters");
+	r.g.text(150, 270, "Population Percent");
+
+    buildLineGraph(r, xyVals, distColors);
+    drawLegend(r, distColors, 340, 50);
+    //buildLineGraphParts('holder', data, 5);
+  });
 };

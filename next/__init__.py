@@ -21,6 +21,7 @@ def main(global_config, **settings):
     config.add_route('run-scenario', '/scenario/{id}/run')
 
     config.add_route('graph-scenario', '/scenario/{id}/graph-data')
+    config.add_route('graph-scenario-cumul', '/scenario/{id}/graph-data-cumul')
 
     config.add_route('show-population-json', '/scenario/{id}/population')
     config.add_route('show-facility-json', 'scenario/{id}/facilities')
