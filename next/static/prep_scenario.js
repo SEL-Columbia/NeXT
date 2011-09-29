@@ -1,4 +1,3 @@
-
 function buildLineGraphParts(id, xyVals, numParts) {
 	console.log(this, arguments);
 	var r = Raphael('holder');
@@ -32,18 +31,18 @@ function buildLineGraph(r, xyVals, colorRanges) {
     var tmpXVals = _.map(xyVals, function(tup) { return tup[0]; });
     var tmpYVals = _.map(xyVals, function(tup) { return tup[1]; });
     
-    var end = 1; 
+    var start, end = 1; 
     for(var i = 0; i < colorRanges.length; i++) {
         start = end - 1;
-        upperVal = colorRanges[i][1];
+        var upperVal = colorRanges[i][1];
         yVals[i] = _.select(_.rest(tmpYVals, start), function(val) { return val <= upperVal; });
         end = start + yVals[i].length;
         end = (end > xyVals.length) ? xyVals.length: end;
         xVals[i] = tmpXVals.slice(start, end);
     }
-    distColors = _.map(colorRanges, function(tup) { return tup[0]; });
-    console.log(xVals);
-    console.log(yVals);
+    var distColors = _.map(colorRanges, function(tup) { return tup[0]; });
+//    console.log(xVals);
+//    console.log(yVals);
 	r.g.linechart(30, 30, 300, 220, xVals, yVals, {shade: true, axis: "0 0 1 1", symbol: "o", colors: distColors});
 }
 
