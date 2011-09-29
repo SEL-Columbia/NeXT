@@ -20,7 +20,7 @@ function buildLineGraphParts(id, xyVals, numParts) {
         xVals[i] = tmpXVals.slice(start, end);
         yVals[i] = tmpYVals.slice(start, end);
     }
-	r.g.linechart(30, 30, 300, 220, xVals, yVals, {shade: true, axis: "0 0 1 1", symbol: "o"});
+	r.g.linechart(30, 30, 270, 220, xVals, yVals, {shade: true, axis: "0 0 1 1", symbol: "x"});
 }
 
 function buildLineGraph(r, xyVals, colorRanges) {

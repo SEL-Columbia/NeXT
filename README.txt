@@ -1,1 +1,1 @@
-NeXT README
+See docs/README.rst

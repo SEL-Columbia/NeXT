@@ -214,7 +214,7 @@ var load_page = function  (options) {
       data: JSON.stringify({'d': $('#distance').val() }),
       contentType: 'application/json; charset=utf-8',
       success: function(data) { 
-        var pct = Math.floor(data.total * 100) / 100;
+        var pct = Math.floor(data.total * 10000) / 100;
         $('#percent').text("" + pct + "%");
       }
       
@@ -263,7 +263,7 @@ var load_page = function  (options) {
 	var r = Raphael('holder');
 	r.g.txtattr.font = "12px 'Fontin Sans', Fontin-Sans, sans-serif";
 	r.g.text(20, 20, "Meters");
-	r.g.text(150, 270, "Population Percent");
+	r.g.text(150, 270, "Population Percentage");
 
     buildLineGraph(r, xyVals, distColors);
     drawLegend(r, distColors, 340, 50);
