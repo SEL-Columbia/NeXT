@@ -22,7 +22,7 @@
     <div class="topbar">
       <div class="topbar-inner"> 
         <div class="container"> 
-          <h1><a href="${request.application_url}">Modi Labs Spatial
+          <h1><a class="brand" href="${request.application_url}">Modi Labs Spatial
           Planning Tool</a></h1>
         </div>
       </div>
