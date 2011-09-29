@@ -42,17 +42,23 @@
   <script src="${request.application_url}/static/g.bar-min.js" 
           type="text/javascript" charset="utf-8">
   </script>
+
+  <script src="${request.application_url}/static/g.line-min.js" 
+          type="text/javascript" charset="utf-8">
+  </script>
   
 
   <script type="text/javascript">
 
     $(function() { 
 
+
      load_page({'mapDiv': 'scenario-map', 
         'bbox': ${list(scenario.get_bounds().bounds)},
         'json_url' : '${request.route_url('show-population-json', id=scenario.id)}',
         'fac_url'  : '${request.route_url('show-facility-json', id=scenario.id)}',
-        'graph_url': '${request.route_url('graph-scenario', id=scenario.id)}',
+        'graph_cumul_url': '${request.route_url('graph-scenario-cumul', id=scenario.id)}',
+        //'graph_url': '${request.route_url('graph-scenario', id=scenario.id)}',
         'new_node_url': '${request.route_url('add-new-nodes', id=scenario.id)}',
         'percent_within': '${request.route_url('find-pop-within', id=scenario.id)}',
         'scenario': ${scenario.id}

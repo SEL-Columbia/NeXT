@@ -1,3 +1,80 @@
+
+function buildLineGraphParts(id, xyVals, numParts) {
+	console.log(this, arguments);
+	var r = Raphael('holder');
+	r.g.txtattr.font = "12px 'Fontin Sans', Fontin-Sans, sans-serif";
+	r.g.text(20, 20, "Meters");
+	r.g.text(150, 270, "Population Percent");
+
+	var xVals = [];
+	var yVals = [];
+    
+    var tmpXVals = _.map(xyVals, function(tup) { return tup[0]; });
+    var tmpYVals = _.map(xyVals, function(tup) { return tup[1]; });
+
+    var end = 1;
+    var partSize = Math.ceil(xyVals.length / numParts);
+    for(var i = 0; i < numParts; i++) {
+        start = end - 1;
+        end = start + partSize;
+        end = (end > xyVals.length - 1) ? xyVals.length - 1 : end;
+        xVals[i] = tmpXVals.slice(start, end);
+        yVals[i] = tmpYVals.slice(start, end);
+    }
+	r.g.linechart(30, 30, 300, 220, xVals, yVals, {shade: true, axis: "0 0 1 1", symbol: "o"});
+}
+
+function buildLineGraph(r, xyVals, colorRanges) {
+
+	var xVals = [];
+	var yVals = [];
+    
+    var tmpXVals = _.map(xyVals, function(tup) { return tup[0]; });
+    var tmpYVals = _.map(xyVals, function(tup) { return tup[1]; });
+    
+    var end = 1; 
+    for(var i = 0; i < colorRanges.length; i++) {
+        start = end - 1;
+        upperVal = colorRanges[i][1];
+        yVals[i] = _.select(_.rest(tmpYVals, start), function(val) { return val <= upperVal; });
+        end = start + yVals[i].length;
+        end = (end > xyVals.length) ? xyVals.length: end;
+        xVals[i] = tmpXVals.slice(start, end);
+    }
+    distColors = _.map(colorRanges, function(tup) { return tup[0]; });
+    console.log(xVals);
+    console.log(yVals);
+	r.g.linechart(30, 30, 300, 220, xVals, yVals, {shade: true, axis: "0 0 1 1", symbol: "o", colors: distColors});
+}
+
+function drawLegend(r, distColors, x, y) { 
+  var legend = {
+    x: x,
+    y: y,
+    fontStyle: "12px 'Fontin Sans', Fontin-Sans, sans-serif",
+    padding: 6,
+    boxOX: 0,
+    boxOY: -4,
+    boxW: 10,
+    boxH: 10,
+    rowHeight: 15
+  };
+  _.each(distColors, function(colD, i){
+    var col = colD[0],
+   	value = colD[1],
+   	description = colD[2];
+   	var rowY = legend.y + legend.rowHeight * i;
+   	r.rect(legend.x + legend.boxOX, rowY + legend.boxOY, legend.boxW, legend.boxH)
+        .attr({
+          fill: col,
+          'stroke-opacity': 0.3
+         });
+    r.text(legend.x + legend.boxOX + legend.boxW + legend.padding, rowY, description)
+      .attr('text-anchor', 'start')
+      .attr('font', legend.fontStyle);
+    });
+}
+
 function calculateDistribution(rawData, _opts) {
     var opts = _.extend({
         numBars: 20
@@ -23,6 +100,7 @@ function calculateDistribution(rawData, _opts) {
     }
     return distributions;
 }
+
 
 function buildGraph(id, distributions, title, _opts) {
 
@@ -63,33 +141,7 @@ function buildGraph(id, distributions, title, _opts) {
     	_.each(colors, function(c, i){
     	    bars[i].attr('fill', c);
     	});
-    	(function drawLegend(){
-    		var legend = {
-    				x: 300,
-    				y: 50,
-    				fontStyle: "12px 'Fontin Sans', Fontin-Sans, sans-serif",
-    				padding: 6,
-    				boxOX: 0,
-    				boxOY: -4,
-    				boxW: 10,
-    				boxH: 10,
-    				rowHeight: 15
-    			};
-    		_.each(opts.distColors, function(colD, i){
-    			var col = colD[0],
-    				value = colD[1],
-    				description = colD[2];
-    			var rowY = legend.y + legend.rowHeight * i;
-    			r.rect(legend.x + legend.boxOX, rowY + legend.boxOY, legend.boxW, legend.boxH)
-    				.attr({
-    					fill: col,
-    					'stroke-opacity': 0.3
-    				});
-    			r.text(legend.x + legend.boxOX + legend.boxW + legend.padding, rowY, description)
-    				.attr('text-anchor', 'start')
-    				.attr('font', legend.fontStyle);
-    		});
-    	})();
+        drawLegend(_opts.distColors, 300, 50);
     }
 }
 //"holder", distributionData, " # People near facilities", opts

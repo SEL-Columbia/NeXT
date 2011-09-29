@@ -122,17 +122,22 @@ class Scenario(Base):
         conn = session.connection()
         sql = text(
         '''
-        select sum(weight) weight, p.distance
-          from
-          (select weight, e.distance
-            from edges e, nodes n
-            where n.node_type_id=1 and
+        select 
+          (sum(cast(weight as float)) / 
+          (select sum(weight) from nodes 
+            where scenario_id = :sc_id and node_type_id=1)) weight,
+          p.distance
+          from 
+          (select weight, e.distance 
+            from edges e, nodes n 
+            where n.node_type_id=1 and 
             e.from_node_id=n.id and
             e.scenario_id = :sc_id) pop_dist,
           (select distance from generate_series(
                     (select min(distance) from edges),
                     (select max(distance) from edges),
-                    (select (max(distance) - min(distance)) / :num_parts from edges))
+                    (select (max(distance) - min(distance)) / 
+                    :num_parts from edges)) 
                     as distance) p
           where pop_dist.distance <= p.distance
           group by p.distance

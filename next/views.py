@@ -222,6 +222,11 @@ def graph_scenario(request):
     sc = get_object_or_404(Scenario, request)
     return json_response(map(list, sc.get_population_vs_distance()))
 
+@view_config(route_name='graph-scenario-cumul')
+def graph_scenario_cumul(request):
+    sc = get_object_or_404(Scenario, request)
+    return json_response(map(list, 
+        sc.get_partitioned_pop_vs_dist(num_partitions=20)))
 
 @view_config(route_name='show-scenario', renderer='show-scenario.mako')
 def show_scenario(request):
