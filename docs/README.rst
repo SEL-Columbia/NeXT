@@ -1,6 +1,16 @@
 Releases
 =========
 
+**0.2-ac8a75b [2011-09-29]**
+
+Release that includes all originally spec'd functionality.
+Added:
+
+- The ability to add a facility and recalculate NN's
+- Display of the cumulative population within X meters
+- Calculator to determine percent within X meters
+- Minor display fixes
+
 **0.1-e0a2860 [2011-09-26]**
 
 Initial release, demo'd to Vijay Modi and Matt Berg on 2011-09-21.  
