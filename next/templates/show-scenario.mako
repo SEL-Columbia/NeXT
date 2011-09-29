@@ -42,6 +42,10 @@
   <script src="${request.application_url}/static/g.bar-min.js" 
           type="text/javascript" charset="utf-8">
   </script>
+
+  <script src="${request.application_url}/static/g.line-min.js" 
+          type="text/javascript" charset="utf-8">
+  </script>
   
 
   <script type="text/javascript">
