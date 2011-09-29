@@ -15,7 +15,6 @@ requires = [
     'Shapely',
     'geoalchemy',
     'colander',
-    'deform',
     'SQLAlchemy',
     'transaction',
     'pyramid_tm',
