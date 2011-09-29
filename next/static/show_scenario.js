@@ -1,6 +1,7 @@
 /*
 #C7E9B4; #7FCDBB; #41B6C4; #1D91C0; #0C2C84
 */
+var new_nodes;
 
 var load_page = function  (options) {
 
@@ -121,7 +122,110 @@ var load_page = function  (options) {
     map.zoomToExtent(bounds);
     map.addControl(new OpenLayers.Control.LayerSwitcher());
     map.addControl(new OpenLayers.Control.Navigation());
+    map.addControl(new OpenLayers.Control.MousePosition());
+
+    // new layer to allow users to add new points
+    new_nodes = new OpenLayers.Layer.Vector();
+    map.addLayer(new_nodes);
+
+    // add control to allow users to add a new point
+
+    var edit_control = new OpenLayers.Control.DrawFeature(
+      new_nodes,
+      OpenLayers.Handler.Point
+    ); 
+    
+    map.addControl(edit_control);
+
+    function update_feature_counter(event) { 
+      var number = new_nodes.features.length;
+      console.log(number);
+      $('#number-features').html('You have added ' + number + ' node(s) to your facilities');
+    }; 
+    
+    new_nodes.events.on({ 
+      sketchcomplete: update_feature_counter
+    })
+
+    var stop = $('#stop-editing'); 
+    var edit = $('#add-facility');
+    var run  = $('#run-scenario');
+
+    edit.click(function() {
+      edit_control.activate();
+      $(this).css('display', 'none') ; 
+      stop.css('display', 'inline');
+      
+    });
+
+    stop.click(function() { 
+      $(this).css('display', 'none');
+      edit.css('display', 'inline');
+      edit_control.deactivate(); 
+      
+      if (new_nodes.features.length !==0 ) {         
+        $('#run-scenario').removeClass('disabled');        
+      }      
+    });
+    
+    run.click(function() { 
+      var runp = confirm('Re-running casuse you to lose your original data, still re-run?');
+      if (runp) {  
+        // steps
+        // sycn new data with old facility datasets via post
+        // call the run url for the scenario
+        // route user to new scenario page.
+        var features = _.map(
+          new_nodes.features, 
+          function(feature) { 
+            var geometry = feature.geometry.transform(
+              new OpenLayers.Projection('EPSG:900913'),
+              new OpenLayers.Projection('EPSG:4326')
+            );
+            
+            return {x: geometry.x, y: geometry.y};            
+          }
+        )
+
+        $.ajax({
+          type: 'POST',
+          url: options.new_node_url,
+          data: JSON.stringify(features),
+          contentType: 'application/json; charset=utf-8',
+          success: function(data) { 
+            window.location = '/scenario/' + options.scenario + '/run' ;
+          },         
+        });
+      } else { 
+        // do nothing
+      }
+     
+    })
+
   }());
+
+
+  function find_percent_within() { 
+    var txt = "% people within";
+    $.ajax({
+      type: 'POST',
+      url: options.percent_within,
+      data: JSON.stringify({'d': $('#distance').val() }),
+      contentType: 'application/json; charset=utf-8',
+      success: function(data) { 
+        var pct = Math.floor(data.total * 100) / 100;
+        $('#percent').text(data.total);
+      }
+      
+    })
+    
+  }; 
+
+  find_percent_within();
+  $('#distance').change(function() { 
+    find_percent_within();
+  })
+
   
   /*
   $.getJSON(options.graph_url, function(data){

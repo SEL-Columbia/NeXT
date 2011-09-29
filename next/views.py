@@ -14,8 +14,10 @@ from sqlalchemy.sql import text
 
 from next.models import Scenario
 from next.models import Node
+from next.models import Edge
 from next.models import NodeType
 from next.models import DBSession
+from next.models import get_node_type
 
 
 def get_object_or_404(cls, request):
@@ -33,11 +35,6 @@ def get_object_or_404(cls, request):
 def json_response(data):
     return Response(simplejson.dumps(data),
                     content_type='application/json')
-
-
-def get_node_type(type):
-    session = DBSession()
-    return session.query(NodeType).filter_by(name=unicode(type)).first()
 
 
 @view_config(route_name='index', renderer='index.mako')
@@ -163,6 +160,10 @@ def run_scenario(request):
     pop_nodes = sc_nodes.filter_by(node_type=pop_type)
     fac_nodes = sc_nodes.filter_by(node_type=fac_type)
 
+    # remove the old edges
+    old_edges = session.query(Edge).filter_by(scenario=scenario)
+    [session.delete(edge) for edge in old_edges]
+
     # look up the function defined in the settings.ini file
     func_path = request.registry.settings.get('next.main', None)
     assert func_path, 'You must configure a function in your settings file'
@@ -232,3 +233,39 @@ def show_scenario(request):
     """
     """
     return {'scenario': get_object_or_404(Scenario, request)}
+
+
+@view_config(route_name='find-pop-within')
+def find_pop_with(request):
+    sc = get_object_or_404(Scenario, request)
+    distance = request.json_body.get('d', 1000)
+
+    return json_response(
+        {'total': sc.get_percent_within(distance)}
+        )
+
+
+@view_config(route_name='add-new-nodes')
+def add_new_nodes(request):
+    session = DBSession()
+    sc = get_object_or_404(Scenario, request)
+    new_nodes = []
+    facility_type = get_node_type('facility')
+    for new_node in request.json_body:
+        geom = WKTSpatialElement(
+            'POINT(%s %s)' % (new_node['x'], new_node['y'])
+            )
+        node = Node(geom, 1, facility_type, sc)
+        new_nodes.append(node)
+    session.add_all(new_nodes)
+    return Response(str(new_nodes))
+
+
+@view_config(route_name='remove-scenario', renderer='remove-scenario.mako')
+def remove_scenario(request):
+    session = DBSession()
+    sc = get_object_or_404(Scenario, request)
+    [session.delete(node) for node in sc.get_nodes()]
+    [session.delete(edge) for edge in sc.get_edges()]
+    session.delete(sc)
+    return HTTPFound(location=request.route_url('index'))

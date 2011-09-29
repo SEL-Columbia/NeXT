@@ -10,15 +10,19 @@
 
 <div class="row">
   <div class="span8">
-    <table>      
+    <table class="zebra-striped">      
       <thead>
-        <td>Name</td>
-        <td>Node count</td>
+        <tr>
+          <th>#</th>
+          <th>Name</th>
+          <th>Node count</th>
+        </tr>
       </thead>
       <tbody>
         % for scenario in scenarios:        
         <tr>
-          <td> 
+          <td>${scenario.id}</td>
+          <td>             
             <a href="${request.route_url('show-scenario',id=scenario.id)}">${scenario}</a>
           </td>
           <td>

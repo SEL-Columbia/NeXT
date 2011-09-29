@@ -20,11 +20,16 @@ from sqlalchemy.orm import scoped_session
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import text
-
+from sqlalchemy.sql import func
 from zope.sqlalchemy import ZopeTransactionExtension
 
 DBSession = scoped_session(sessionmaker(extension=ZopeTransactionExtension()))
 Base = declarative_base()
+
+
+def get_node_type(type):
+    session = DBSession()
+    return session.query(NodeType).filter_by(name=unicode(type)).first()
 
 
 class Scenario(Base):
@@ -49,6 +54,34 @@ class Scenario(Base):
     def get_nodes(self):
         session = DBSession()
         return session.query(Node).filter_by(scenario=self)
+
+    def get_total_population(self):
+        """
+        select sum(nodes.weight) from nodes where ...
+        """
+        session = DBSession()
+        total = session.query(func.sum(Node.weight))\
+            .filter_by(scenario=self)\
+            .filter_by(node_type=get_node_type('population'))
+        return float(total[0][0])
+
+    def get_total_population_within(self, d):
+        """
+        """
+        session = DBSession()
+        total = session.query(func.sum(Node.weight)).join(
+            Edge, Node.id == Edge.from_node_id)\
+            .filter(Node.scenario_id == self.id)\
+            .filter(Edge.distance <= d)\
+            .filter(Node.node_type == get_node_type('population'))
+        print '------------------------------'
+        print total
+        return float(total[0][0])
+
+    def get_percent_within(self, d):
+        total = self.get_total_population()
+        subset = self.get_total_population_within(d)
+        return subset / total
 
     def to_geojson(self):
         bounds = self.get_bounds(srid=4326)
@@ -83,7 +116,7 @@ class Scenario(Base):
            order by edges.distance ''')
         rset = conn.execute(sql, sc_id=self.id).fetchall()
         return rset
-    
+
     def get_partitioned_pop_vs_dist(self, num_partitions=5):
         session = DBSession()
         conn = session.connection()
@@ -101,7 +134,7 @@ class Scenario(Base):
             e.from_node_id=n.id and
             e.scenario_id = :sc_id) pop_dist,
           (select distance from generate_series(
-                    (select min(distance) from edges), 
+                    (select min(distance) from edges),
                     (select max(distance) from edges),
                     (select (max(distance) - min(distance)) / 
                     :num_parts from edges)) 
@@ -110,8 +143,10 @@ class Scenario(Base):
           group by p.distance
           order by p.distance
         ''')
-        rset = conn.execute(sql, sc_id=self.id, 
-                num_parts=num_partitions).fetchall()
+        rset = conn.execute(
+            sql,
+            sc_id=self.id,
+            num_parts=num_partitions).fetchall()
         return rset
 
 
