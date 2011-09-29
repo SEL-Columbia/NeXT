@@ -206,7 +206,8 @@ var load_page = function  (options) {
 
 
   function find_percent_within() { 
-    var txt = "% people within";
+//   --not using this txt yet.
+//    var txt = "% people within";
     $.ajax({
       type: 'POST',
       url: options.percent_within,
@@ -214,7 +215,7 @@ var load_page = function  (options) {
       contentType: 'application/json; charset=utf-8',
       success: function(data) { 
         var pct = Math.floor(data.total * 100) / 100;
-        $('#percent').text(data.total);
+        $('#percent').text("" + pct + "%");
       }
       
     })
