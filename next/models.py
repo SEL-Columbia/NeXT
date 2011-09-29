@@ -134,10 +134,13 @@ class Scenario(Base):
             e.from_node_id=n.id and
             e.scenario_id = :sc_id) pop_dist,
           (select distance from generate_series(
-                    (select min(distance) from edges),
-                    (select max(distance) from edges),
+                    (select min(distance) from edges 
+                     where scenario_id = :sc_id),
+                    (select max(distance) from edges 
+                     where scenario_id = :sc_id),
                     (select (max(distance) - min(distance)) / 
-                    :num_parts from edges)) 
+                     :num_parts from edges 
+                     where scenario_id = :sc_id)) 
                     as distance) p
           where pop_dist.distance <= p.distance
           group by p.distance

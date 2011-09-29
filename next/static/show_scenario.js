@@ -264,9 +264,9 @@ var load_page = function  (options) {
 	r.g.txtattr.font = "12px 'Fontin Sans', Fontin-Sans, sans-serif";
 	r.g.text(20, 20, "Meters");
 	r.g.text(150, 270, "Population Percentage");
-
+    
     buildLineGraph(r, xyVals, distColors);
     drawLegend(r, distColors, 340, 50);
-    //buildLineGraphParts('holder', data, 5);
+    //buildLineGraphParts(r, xyVals, 5);
   });
 };

@@ -1,5 +1,4 @@
 function buildLineGraphParts(id, xyVals, numParts) {
-	console.log(this, arguments);
 	var r = Raphael('holder');
 	r.g.txtattr.font = "12px 'Fontin Sans', Fontin-Sans, sans-serif";
 	r.g.text(20, 20, "Meters");
@@ -20,7 +19,7 @@ function buildLineGraphParts(id, xyVals, numParts) {
         xVals[i] = tmpXVals.slice(start, end);
         yVals[i] = tmpYVals.slice(start, end);
     }
-	r.g.linechart(30, 30, 270, 220, xVals, yVals, {shade: true, axis: "0 0 1 1", symbol: "x"});
+	r.g.linechart(30, 30, 270, 220, xVals, yVals, {shade: true, axis: "0 0 1 1", symbol: "o"});
 }
 
 function buildLineGraph(r, xyVals, colorRanges) {
@@ -41,8 +40,8 @@ function buildLineGraph(r, xyVals, colorRanges) {
         xVals[i] = tmpXVals.slice(start, end);
     }
     var distColors = _.map(colorRanges, function(tup) { return tup[0]; });
-//    console.log(xVals);
-//    console.log(yVals);
+    //log(xVals);
+    //log(yVals);
 	r.g.linechart(30, 30, 300, 220, xVals, yVals, {shade: true, axis: "0 0 1 1", symbol: "o", colors: distColors});
 }
 
