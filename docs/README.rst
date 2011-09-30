@@ -1,6 +1,10 @@
 Releases
 =========
 
+**0.2a-407c53e [2011-09-29]**
+
+Fixed BUG in cumulative population SQL that was causing browser crash.
+
 **0.2-ac8a75b [2011-09-29]**
 
 Release that includes all originally spec'd functionality.
