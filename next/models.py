@@ -63,7 +63,11 @@ class Scenario(Base):
         total = session.query(func.sum(Node.weight))\
             .filter_by(scenario=self)\
             .filter_by(node_type=get_node_type('population'))
-        return float(total[0][0])
+        # Check whether we have results
+        if(total.count() > 0):
+            return float(total[0][0])
+        else:
+            return 0.0
 
     def get_total_population_within(self, d):
         """
@@ -75,8 +79,12 @@ class Scenario(Base):
             .filter(Edge.distance <= d)\
             .filter(Node.node_type == get_node_type('population'))
         print '------------------------------'
-        print total
-        return float(total[0][0])
+        #Check whether we have results
+        if(total.count() > 0):
+            print total
+            return float(total[0][0])
+        else:
+            return 0.0
 
     def get_percent_within(self, d):
         total = self.get_total_population()
@@ -104,6 +112,7 @@ class Scenario(Base):
             '''select astext(
                st_transform(st_setsrid(st_extent(point), 4326), :srid))
                from nodes where scenario_id = :sc_id''')
+        #TODO:  Handle case where no nodes in scenario
         rset = conn.execute(sql, srid=srid, sc_id=self.id)
         return loads(rset.fetchone()[0])
 
@@ -118,8 +127,23 @@ class Scenario(Base):
         return rset
 
     def get_partitioned_pop_vs_dist(self, num_partitions=5):
+        # This function is only valid when there are edges
+        # and the distance between the max/min is > 0
         session = DBSession()
+        ct = session.query(func.count(Edge.id)).filter_by(scenario=self).first()
+        if(ct[0] == 0):
+            return []
+        
         conn = session.connection()
+        sql = text(
+        '''
+        select max(distance) - min(distance) from edges where scenario_id = :sc_id
+        ''')
+        dist_diff = conn.execute(sql, sc_id=self.id).first()
+
+        if(dist_diff[0] <= 0):
+            return []
+
         sql = text(
         '''
         select 

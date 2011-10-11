@@ -101,7 +101,7 @@
   </div>
 
   <div class="row">
-    <div class="span8" style="width: 300px;">
+    <div class="span8" style="width: 270px;">
       <br />
       <form method="" action="">
         <p>Percent of population within</p>
@@ -111,7 +111,7 @@
       </form>
       <h2 id="percent"></h2>
     </div>
-    <div class="span7" id="holder" style="width: 450px;"></div>
+    <div class="span7" id="holder" style="width: 470px;"></div>
   </div>
 
 </%def>

@@ -248,16 +248,21 @@ var load_page = function  (options) {
   */
 
   $.getJSON(options.graph_cumul_url, function(data){
+    //don't do anything if there's no data
+    if(data.length == 0) {
+      return;
+    }
     var x = 0;
 
     var xyVals = _.map(data, function(tup) { return [tup[0] * 100, tup[1]]; });
     var maxY = Math.max.apply(null, _.map(data, function(tup) { return tup[1]; }));
+    var formattedMaxY = Math.floor((maxY / 1000) * 100) / 100;
     var distColors = [
       //   color, max, description
       ['#c7e9b4', 1000, 'Under 1km'],
       ['#7fcdbb', 2000, 'Under 2km'],
       ['#41b6c4', 3000, 'Under 3km'],
-      ['#0c2c84', Infinity, "Under " + (maxY / 1000) + "km"]
+      ['#0c2c84', Infinity, "Under " + formattedMaxY + "km"]
    	];
 
 	var r = Raphael('holder');
