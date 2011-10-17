@@ -35,8 +35,8 @@ The following is a brief guide to installing the NeXT application
 
 The following applications/libraries are required by NeXT::
 
-  setuptools
-  virtualenv
+  python-setuptools
+  python-virtualenv
   postgresql-9.0 (and postgresql-server-dev-9.0)
   PostGIS (see http://postgis.refractions.net/docs/ch02.html)
   (note that PostGIS has several dependencies itself)
