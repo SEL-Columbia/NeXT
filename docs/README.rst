@@ -102,3 +102,60 @@ The following are the initial envisioned use cases for the NeXT spatial analysis
 2. The scenario is re-run and the view is refreshed with an updated map and graph.
 
 
+
+Next steps for NeXT
+===================
+
+Ideal state
+----------- 
+
+#. We want the ability to chain high level spatial operations together.
+
+#. We want these operations to be fast.
+
+#. Render the results in graph and map from. Targeting the browser.
+
+#. 
+
+
+Open questions
+--------------
+
+#. SQL vs ORM? 
+
+#. Client vs server rendering of information? 
+
+#. Frameworks?
+
+#. Cleaning and clustering.
+
+#. User input, post processing. 
+
+
+
+Parts
+------
+Side not, a collection of tools that help us get our job done.
+
+#. Translation layer from shapefiles, csv, geojson, xml to PostGIS.
+
+   #. Web based translation layer
+   #. Command line translation layer, 
+
+Current tools
+org2ogr -f "Postgresql" PG:dbname=db shapefile.shp -nln newLayerName
+shp2pgsql -s srid shapfile.shp newLayerName | psql -d db 
+
+
+#. Web based UI.
+
+
+#. Sql -> graph. A simple way to render the results of a sql into a graph, or map?
+
+   server -> client
+   python, sql -> javascript svg. 
+
+
+
+   $('#graph').nextGraph('#');
+   $('#map').nextMap('select * from nodes where sc 1');
