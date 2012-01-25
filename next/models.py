@@ -9,6 +9,7 @@ from geoalchemy import Column
 from geoalchemy import GeometryColumn
 from geoalchemy import Point
 from geoalchemy import GeometryDDL
+from geoalchemy import WKTSpatialElement
 
 from sqlalchemy import Integer
 from sqlalchemy import Unicode
@@ -78,13 +79,14 @@ class Scenario(Base):
             .filter(Node.scenario_id == self.id)\
             .filter(Edge.distance <= d)\
             .filter(Node.node_type == get_node_type('population'))
-        print '------------------------------'
+        #print '------------------------------'
         #Check whether we have results
         if(total.count() > 0):
-            print total
+            #print total
             return float(total[0][0])
         else:
             return 0.0
+
 
     def get_percent_within(self, d):
         total = self.get_total_population()
@@ -109,7 +111,7 @@ class Scenario(Base):
         session = DBSession()
         conn = session.connection()
         sql = text(
-            '''select astext(
+            '''select st_astext(
                st_transform(st_setsrid(st_extent(point), 4326), :srid))
                from nodes where scenario_id = :sc_id''')
         #TODO:  Handle case where no nodes in scenario
@@ -176,7 +178,81 @@ class Scenario(Base):
             num_parts=num_partitions).fetchall()
         return rset
 
+        
+    def get_pop_nodes_outside_distance(self, distance):
+        """
+        Get the population nodes that are further than distance from their associated facility.
+        """
+        session = DBSession()
+        pop_nodes = session.query(Node).join(
+            Edge, Node.id == Edge.from_node_id)\
+            .filter(Node.scenario_id == self.id)\
+            .filter(Edge.distance > distance)\
+            .filter(Node.node_type == get_node_type('population'))
 
+        return pop_nodes
+
+
+    def locate_facilities(self, distance, num_facilities):
+        """
+        locate num_facilities that cover the population within
+        distance from those facilities.
+        """
+        pop_nodes = self.get_pop_nodes_outside_distance(distance).all()
+        pts = get_coords(pop_nodes)
+        km = distance / 1000.0
+        from spatial_utils import cluster_r, util
+        clusters = cluster_r.hclust(pts, km, "ward")
+        clusters.sort(key=len, reverse=True)
+        k_clusts = []
+        if num_facilities > len(clusters):
+            k_clusts = clusters
+        else:
+            k_clusts = clusters[0:num_facilities]
+            
+        centroids = []
+        for cluster in k_clusts:
+            unzipped = zip(*cluster)
+            centroids.append(util.points_to_centroid(unzipped))
+
+        return centroids
+        
+
+    def create_edges(self):
+        """
+        Clear out any existing edges and run nearest neighbor to
+        associate population nodes with their nearest facility.
+        """
+        session = DBSession()
+        pop_type = get_node_type('population')
+        fac_type = get_node_type('facility')
+        nodes = session.query(Node).filter_by(scenario=self)
+        pop_nodes = nodes.filter_by(node_type=pop_type)
+        fac_nodes = nodes.filter_by(node_type=fac_type)
+
+        old_edges = session.query(Edge).filter_by(scenario=self)
+        [session.delete(edge) for edge in old_edges]
+
+        import nn_qt
+        edges = nn_qt.generate_nearest_neighbor(self, pop_nodes, fac_nodes)
+        session.add_all(edges)
+
+    
+    def create_nodes(self, points, type_string):
+        """
+        Create a list of nodes from the list of points
+        """
+        session = DBSession()
+        node_type = get_node_type(type_string)
+        new_nodes = []
+        for pt in points:
+            geom = WKTSpatialElement('POINT(%s %s)' % (pt[0], pt[1]))
+            node = Node(geom, 1, node_type, self)
+            new_nodes.append(node)
+
+        session.add_all(new_nodes)
+                                     
+    
 class NodeType(Base):
     """
     A NodeType
@@ -276,8 +352,25 @@ class Edge(Base):
         self.to_node = to_node
         self.distance = distance
 
+
+    
     def __repr__(self):
         return '#<Edge from:%s to: %s>' % (self.from_node.id, self.to_node.id)
+
+
+def get_coords(nodes):
+    """ 
+    Get array of coordinates from the list of nodes
+    """
+    
+    #Not sure why lambda function from within map scope
+    #cannot see session.  This inner function is a workaround.
+    def get_coord_fun(sesh):
+        return lambda pt_node: pt_node.point.coords(sesh)
+
+    coord_fun = get_coord_fun(DBSession)
+    return map(coord_fun, nodes)
+
 
 # Needed this to add the nodes table to the PostGIS geometry_table.
 GeometryDDL(Node.__table__)

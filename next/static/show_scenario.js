@@ -147,7 +147,7 @@ var load_page = function  (options) {
       sketchcomplete: update_feature_counter
     })
 
-    var stop = $('#stop-editing'); 
+    var stop = $('#stop-editing');
     var edit = $('#add-facility');
     var run  = $('#run-scenario');
 
@@ -169,10 +169,10 @@ var load_page = function  (options) {
     });
     
     run.click(function() { 
-      var runp = confirm('Re-running casuse you to lose your original data, still re-run?');
+      var runp = confirm('Re-running will delete your original data, still re-run?');
       if (runp) {  
         // steps
-        // sycn new data with old facility datasets via post
+        // sync new data with old facility datasets via post
         // call the run url for the scenario
         // route user to new scenario page.
         var features = _.map(
@@ -200,8 +200,41 @@ var load_page = function  (options) {
         // do nothing
       }
      
-    })
+    });
 
+    $( "#auto-add-form" ).dialog({
+			autoOpen: false,
+			height: 300,
+			width: 350,
+			modal: true,
+			buttons: {
+	            "Add Facilities": function() {
+                    $.ajax({
+                        type: 'POST',
+                        url: options.create_facilities,
+                        data: JSON.stringify({'d': $('#facility_distance').val(),
+                                              'n': $('#num_facilities').val()}),
+                        contentType: 'application/json; charset=utf-8',
+                        success: function(data) { 
+                            window.location = '/scenario/' + options.scenario + '/run';
+                        }
+                    });
+				},
+				Cancel: function() {
+					$( this ).dialog( "close" );
+				}
+			},
+			close: function() {
+                $(this).dialog("close");
+		    }
+      });
+
+      $("#auto-add-facilities")
+        .button()
+        .click(function() { 
+          $("#auto-add-form").dialog("open");
+        });
+    
   }());
 
 

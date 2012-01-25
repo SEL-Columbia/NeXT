@@ -14,6 +14,11 @@
   </script>
 
   <script 
+     type="text/javascript"
+     src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.16/jquery-ui.js">
+  </script>
+
+  <script 
      type="text/javascript" 
      src="${request.application_url}/static/openlayers/OpenLayers.js">
   </script>
@@ -61,6 +66,7 @@
         //'graph_url': '${request.route_url('graph-scenario', id=scenario.id)}',
         'new_node_url': '${request.route_url('add-new-nodes', id=scenario.id)}',
         'percent_within': '${request.route_url('find-pop-within', id=scenario.id)}',
+        'create_facilities': '${request.route_url('create-facilities', id=scenario.id)}',
         'scenario': ${scenario.id}
       });
     });
@@ -70,15 +76,37 @@
 </%def>
 
 <%def name="body()">
+<div id="auto-add-form" title="Enter Parameters">
+    <!--
+	<p class="validateTips">All form fields are required.</p> 
+    -->
+	<form>
+	<fieldset>
+		<label for="facility_distance">Distance</label>
+		<input type="text" name="facility_distance" id="facility_distance" value="1000" class="text ui-widget-content ui-corner-all" />
+		<label for="num_facilities">Number of Facilities</label>
+		<input type="text" name="num_facilities" id="num_facilities" value="1" class="text ui-widget-content ui-corner-all" />
+	</fieldset>
+	</form>
+</div>
+
   <h3>Results for: ${scenario.name}</h3>
   <br />
+
   <div class="row">
     <div class="span8">      
-
+         
+      <!--
       <a class="btn" href="${request.route_url('remove-scenario',id=scenario.id)}">
         Remove scenario
       </a>
-      <a href="#" class="btn" id="add-facility">Add new facility</a>
+      -->
+
+      <button id="auto-add-facilities">Auto-add new facilities</button>
+      <!--    
+      <a href="#" class="btn" id="auto-add-facilities">Auto-add new facilities</a>
+      -->
+      <a href="#" class="btn" id="add-facility">Manually add new facility</a>
       <a class="btn" id="stop-editing" href="#" style="display:none">Stop editing</a>
       <a id="run-scenario" class="btn disabled" href="#">Re-run scenario</a>
 

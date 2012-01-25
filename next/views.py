@@ -146,8 +146,19 @@ def create_scenario(request):
 
 @view_config(route_name='run-scenario')
 def run_scenario(request):
-    """
-    """
+    
+    session = DBSession()
+    scenario = get_object_or_404(Scenario, request)
+    scenario.create_edges()
+    return HTTPFound(
+        location=request.route_url('show-scenario', id=scenario.id))
+
+"""
+Pushed this into models.Scenario as above
+TODO:  Remove once tested
+@view_config(route_name='run-scenario')
+def run_scenario(request):
+
     import importlib
     session = DBSession()
     # get the scenario
@@ -177,7 +188,7 @@ def run_scenario(request):
     session.add_all(edges)
     return HTTPFound(
         location=request.route_url('show-scenario', id=scenario.id))
-
+"""
 
 @view_config(route_name='show-population-json')
 def show_population_json(request):
@@ -245,6 +256,22 @@ def find_pop_with(request):
         )
 
 
+@view_config(route_name='create-facilities')
+def create_facilities(request):
+    """
+    Create new facilities based on distance and re-create the nearest neighbor edges.  Display the new output
+    """
+    sc = get_object_or_404(Scenario, request)
+    distance = request.matchdict.get('d', 1000)
+    num_facilities = request.matchdict.get('n', 1)
+
+    centroids = sc.locate_facilities(distance, num_facilities)
+    sc.create_nodes(centroids, 'facility')
+    sc.create_edges()
+    return HTTPFound(
+        location=request.route_url('show-scenario', id=sc.id))
+
+    
 @view_config(route_name='add-new-nodes')
 def add_new_nodes(request):
     session = DBSession()

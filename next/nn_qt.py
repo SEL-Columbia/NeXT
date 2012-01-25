@@ -1,7 +1,6 @@
-
 from shapely.wkb import loads
 from next.models import Edge
-from spatial_utils import util
+from spatial_utils import quad_tree 
 from nn import computeSphericalDistance
 
 
@@ -20,7 +19,7 @@ def generate_nearest_neighbor(scenario, pop_nodes, facility_nodes):
     """
     edges = []
     bounds = scenario.get_bounds(4326).bounds
-    qt = util.QuadTree(10, bounds[:2], bounds[2:], 
+    qt = quad_tree.QuadTree(10, bounds[:2], bounds[2:], 
 	    lambda obj: loads(str(obj.point.geom_wkb)).bounds[:2], True)
     for fac_nd in facility_nodes: qt.add(fac_nd)
     for pop_node in pop_nodes:

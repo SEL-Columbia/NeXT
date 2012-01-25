@@ -60,8 +60,10 @@ class ImportFixtures(Command):
                     column_spec = table.c.get(column_name, None)
                     if column_spec is not None:
                         if str(column_spec.type) in geom_types:
+                            # Hardcoding SRID=4326 for now
+                            # PostGIS 2.0 doesn't default it
                             inst[column_spec.name] \
-                                = loads(cell).wkb.encode('hex')
+                                = "SRID=4326;%s" % loads(cell).wkb.encode('hex')
                         else:
                             inst[column_spec.name] = cell
                 table.insert().execute(inst)

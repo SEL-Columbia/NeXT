@@ -28,6 +28,7 @@ def main(global_config, **settings):
 
     config.add_route('show-population-json', '/scenario/{id}/population')
     config.add_route('show-facility-json', 'scenario/{id}/facilities')
+    config.add_route('create-facilities', 'scenario/{id}/create-facilities')
 
     config.scan()
     return config.make_wsgi_app()
