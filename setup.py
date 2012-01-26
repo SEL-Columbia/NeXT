@@ -12,6 +12,8 @@ requires = [
     'gunicorn',
     'geojson',
     'pyyaml',
+    'numpy',
+    'rpy2',
     'Shapely',
     'geoalchemy',
     'colander',
