@@ -2,18 +2,15 @@ dropdb next
 
 createdb next 
 
-pgis_sql=`find /usr/share/postgresql -name postgis.sql`
-if [ -f "$pgis_sql" ]; then
-    psql -d next -f "$pgis_sql"
-else
-    echo "postgis.sql not found, check your postgis installation."
-    return -1
-fi
+sql_load_list="postgis.sql spatial_ref_sys.sql rtpostgis.sql topology.sql"
 
-sp_ref_sql=`find /usr/share/postgresql -name spatial_ref_sys.sql`
-if [ -f "$sp_ref_sql" ]; then
-    psql -d next -f "$sp_ref_sql"
-else
-    echo "spatial_ref_sys.sql not found, check your postgis installation."
+for file in $sql_load_list; 
+do 
+  file_path=`find /usr/share/postgresql -name $file`
+  if [ -f "$file_path" ]; then
+    psql -U postgres -d next -f "$file_path"
+  else
+    echo "$file_path not found, check your postgis installation."
     return -1
-fi
+  fi
+done 

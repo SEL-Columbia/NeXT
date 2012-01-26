@@ -202,7 +202,7 @@ class Scenario(Base):
         pts = get_coords(pop_nodes)
         km = distance / 1000.0
         from spatial_utils import cluster_r, util
-        clusters = cluster_r.hclust(pts, km, "ward")
+        clusters = cluster_r.hclust(pts, km, "average")
         clusters.sort(key=len, reverse=True)
         k_clusts = []
         if num_facilities > len(clusters):

@@ -262,8 +262,8 @@ def create_facilities(request):
     Create new facilities based on distance and re-create the nearest neighbor edges.  Display the new output
     """
     sc = get_object_or_404(Scenario, request)
-    distance = request.matchdict.get('d', 1000)
-    num_facilities = request.matchdict.get('n', 1)
+    distance = float(request.json_body.get('d', 1000))
+    num_facilities = int(request.json_body.get('n', 1))
 
     centroids = sc.locate_facilities(distance, num_facilities)
     sc.create_nodes(centroids, 'facility')

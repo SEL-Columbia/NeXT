@@ -137,19 +137,22 @@ var load_page = function  (options) {
     
     map.addControl(edit_control);
 
+    /*
     function update_feature_counter(event) { 
       var number = new_nodes.features.length;
       console.log(number);
       $('#number-features').html('You have added ' + number + ' node(s) to your facilities');
-    }; 
+    };
     
     new_nodes.events.on({ 
       sketchcomplete: update_feature_counter
     })
+    */
 
     var stop = $('#stop-editing');
     var edit = $('#add-facility');
     var run  = $('#run-scenario');
+    var auto_add  = $('#auto-add-facilities');
 
     edit.click(function() {
       edit_control.activate();
@@ -202,6 +205,20 @@ var load_page = function  (options) {
      
     });
 
+    auto_add.click(function() { 
+        $.ajax({
+            type: 'POST',
+            url: options.create_facilities,
+            data: JSON.stringify({'d': $('#facility_distance').val(),
+                                  'n': $('#num_facilities').val()}),
+            contentType: 'application/json; charset=utf-8',
+            success: function(data) { 
+                window.location = '/scenario/' + options.scenario + '/run';
+            }
+        });
+    });
+
+    /*
     $( "#auto-add-form" ).dialog({
 			autoOpen: false,
 			height: 300,
@@ -209,16 +226,15 @@ var load_page = function  (options) {
 			modal: true,
 			buttons: {
 	            "Add Facilities": function() {
-                    $.ajax({
-                        type: 'POST',
-                        url: options.create_facilities,
-                        data: JSON.stringify({'d': $('#facility_distance').val(),
-                                              'n': $('#num_facilities').val()}),
-                        contentType: 'application/json; charset=utf-8',
-                        success: function(data) { 
-                            window.location = '/scenario/' + options.scenario + '/run';
-                        }
-                    });
+                $.ajax({
+                type: 'POST',
+                url: options.new_node_url,
+                data: JSON.stringify(features),
+                contentType: 'application/json; charset=utf-8',
+                success: function(data) { 
+                window.location = '/scenario/' + options.scenario + '/run' ;
+                },         
+                });
 				},
 				Cancel: function() {
 					$( this ).dialog( "close" );
@@ -234,6 +250,7 @@ var load_page = function  (options) {
         .click(function() { 
           $("#auto-add-form").dialog("open");
         });
+      */
     
   }());
 
