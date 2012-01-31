@@ -287,12 +287,24 @@ def add_new_nodes(request):
     session.add_all(new_nodes)
     return Response(str(new_nodes))
 
+def list_to_dict(param_pairs):
+    new_dict = {}
+    for pair in param_pairs:
+        key = pair[0]
+        val = pair[1]
+        if (not new_dict.has_key(key)):
+            new_dict[key] = []
+        new_dict[key].append(val)
 
-@view_config(route_name='remove-scenario', renderer='remove-scenario.mako')
+    return new_dict 
+
+@view_config(route_name='remove-scenarios')
 def remove_scenario(request):
     session = DBSession()
-    sc = get_object_or_404(Scenario, request)
-    [session.delete(node) for node in sc.get_nodes()]
-    [session.delete(edge) for edge in sc.get_edges()]
-    session.delete(sc)
+    sc_pairs = request.params
+    for sid in sc_pairs.dict_of_lists()['scenarios']:
+        sc = session.query(Scenario).get(int(sid))
+        [session.delete(edge) for edge in sc.get_edges()]
+        [session.delete(node) for node in sc.get_nodes()]
+        session.delete(sc)
     return HTTPFound(location=request.route_url('index'))

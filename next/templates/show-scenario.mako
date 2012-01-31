@@ -88,13 +88,7 @@
   <div class="row">
     <div class="span7">      
          
-      <!--
-      <a class="btn" href="${request.route_url('remove-scenario',id=scenario.id)}">
-        Remove scenario
-      </a>
-      -->
-
-      <a href="#" class="btn" id="auto-add-facilities">Auto-add new facilities</a> 
+    <a href="#" class="btn" id="auto-add-facilities">Auto-add new facilities</a> 
 	  <form>
       	  <fieldset>
 	      <label for="facility_distance">Distance</label>

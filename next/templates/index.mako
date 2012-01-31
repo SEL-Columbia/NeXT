@@ -11,11 +11,13 @@
 <div class="row">
   <div class="span8">
     <table class="zebra-striped">      
+      <form method="get" action="${request.route_url('remove-scenarios')}" name="edit">
       <thead>
         <tr>
           <th>#</th>
           <th>Name</th>
           <th>Node count</th>
+          <th><button class="btn" type="submit">Delete</button></th>
         </tr>
       </thead>
       <tbody>
@@ -28,9 +30,13 @@
           <td>
             ${scenario.get_nodes().count()}
           </td>
+          <td>
+            <input name="scenarios" type="checkbox" value="${scenario.id}"/>
+          </td>
         </tr>
         % endfor
       </tbody>
+      </form>
     </table>
   </div>
 </div>
