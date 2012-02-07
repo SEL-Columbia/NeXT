@@ -85,14 +85,15 @@ The following applications/libraries are required by NeXT
 ::
 
   
-6. Run the development server 
+  
+9. Run the development server 
    
 ::
 
   paster serve development.ini --reload
 
 
-7. (optional) Run the production server
+10. (optional) Run the production server
 
 
 
