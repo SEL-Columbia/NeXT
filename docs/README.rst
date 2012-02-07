@@ -40,6 +40,7 @@ The following applications/libraries are required by NeXT
 
   Python 2.7
   R (r-base)
+  R's sp package (via install.packages('sp') from within R)
   python-dev
   python-setuptools
   python-virtualenv
@@ -84,7 +85,7 @@ The following applications/libraries are required by NeXT
 
 ::
 
-  
+  paster import-fixtures <production | development>.ini fixtures.yaml  
   
 9. Run the development server 
    
@@ -93,7 +94,17 @@ The following applications/libraries are required by NeXT
   paster serve development.ini --reload
 
 
-10. (optional) Run the production server
+10. (optional) Run the production server.  
+
+  First install
+
+::
+
+  apache2
+  modwsgi (see http://code.google.com/p/modwsgi/wiki/QuickInstallationGuide)
+  
+Production runs on mod_wsgi via apache.  You can find a tutorial here:  http://docs.pylonsproject.org/projects/pyramid/en/1.0-branch/tutorials/modwsgi/index.html.  As a simplified configuration, we simply add the apache modwsgi site configuration for next to the httpd.conf file.  The wsgi.load file needs to be <apache_dir>/mods-available dir and soft linked to the <apache_dir>/mods-enabled dir.  Once configured, restart apache.   
+
 
 
 
