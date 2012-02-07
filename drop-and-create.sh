@@ -2,7 +2,7 @@ dropdb next
 
 createdb next 
 
-sql_load_list="postgis.sql spatial_ref_sys.sql rtpostgis.sql topology.sql"
+sql_load_list="postgis.sql spatial_ref_sys.sql"
 
 for file in $sql_load_list; 
 do 
@@ -10,7 +10,7 @@ do
   if [ -f "$file_path" ]; then
     psql -U postgres -d next -f "$file_path"
   else
-    echo "$file_path not found, check your postgis installation."
+    echo "$file not found, check your postgis installation."
     return -1
   fi
 done 

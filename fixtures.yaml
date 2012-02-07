@@ -1,5 +1,3 @@
-- fields: {name: !!python/unicode 'scenario1'}
-  table: scenarios
 - fields: {name: !!python/unicode 'population'}
   table: nodetypes
 - fields: {name: !!python/unicode 'facility'}

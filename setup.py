@@ -11,6 +11,7 @@ requires = [
     'simplejson',
     'gunicorn',
     'geojson',
+    'psycopg2',
     'pyyaml',
     'numpy',
     'rpy2',

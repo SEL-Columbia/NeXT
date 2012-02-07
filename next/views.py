@@ -2,6 +2,7 @@ from shutil import copyfileobj
 import os
 import csv
 import simplejson
+import StringIO
 
 from pyramid.response import Response
 from pyramid.httpexceptions import HTTPNotFound
@@ -18,7 +19,7 @@ from next.models import Edge
 from next.models import NodeType
 from next.models import DBSession
 from next.models import get_node_type
-
+from next.spatial_utils import pg_import
 
 def get_object_or_404(cls, request):
     session = DBSession()
@@ -92,8 +93,80 @@ def csv_to_nodes(request, csv_file, scenario, node_type):
 
     return c
 
-
+def write_tmp_file(post_file, tmp_file):
+    raw_file = post_file.file
+    open_tmp = open(tmp_file, 'wb')
+    copyfileobj(raw_file, open_tmp)
+    open_tmp.close()
+    
+    
 @view_config(route_name='create-scenario', renderer='create-scenario.mako')
+def create_scenario2(request):
+    """
+    Bulk load the nodes from the population and facility csv's
+    """
+    if(request.method=='POST'):
+        session = DBSession()
+        dbapi_conn = session.connection().connection
+        try:
+            pop_type = get_node_type('population')
+            fac_type = get_node_type('facility')
+    
+            name = request.POST['name']
+            # make sure that we have a name
+            # TODO we should
+            assert len(name) != 0
+    
+            sc = Scenario(name)
+            session.add(sc)
+            session.flush()
+            pop_file = request.POST['pop-csv']
+            fac_file = request.POST['fac-csv']
+            
+            tmp_pop_file = os.path.join(
+                request.registry.settings['next.temporary_folder'],
+                pop_file.filename
+                )
+
+            tmp_fac_file = os.path.join(
+                request.registry.settings['next.temporary_folder'],
+                fac_file.filename
+                )
+
+            write_tmp_file(pop_file, tmp_pop_file)
+            write_tmp_file(fac_file, tmp_fac_file)
+
+            importer = pg_import.PGImport(dbapi_conn, 'nodes', ('weight', 'node_type_id', 'scenario_id', 'point'))
+            pop_translator = pg_import.CSVToCSV_WKT_Point((0, 1), {0: 1, 1: pop_type.id, 2: sc.id})
+            fac_translator = pg_import.CSVToCSV_WKT_Point((0, 1), {0: 1, 1: fac_type.id, 2: sc.id})
+            pop_stream = StringIO.StringIO()
+            fac_stream = StringIO.StringIO()
+            in_pop_stream = open(tmp_pop_file, 'rU')
+            in_fac_stream = open(tmp_fac_file, 'rU')
+            pop_translator.translate(in_pop_stream, pop_stream)
+            fac_translator.translate(in_fac_stream, fac_stream)
+            pop_stream.seek(0)
+            fac_stream.seek(0)
+            importer.do_import(pop_stream)
+            importer.do_import(fac_stream)
+            
+            #do we need to close the out_pop_stream/fac_stream?
+            dbapi_conn.commit()
+        except Exception as error:
+            dbapi_conn.rollback()
+            raise(error)    
+
+            
+        # send the user to the show scenario page right now
+        return HTTPFound(location=request.route_url('run-scenario', id=sc.id))
+        
+    elif request.method == 'GET':
+        return {}
+    else:
+        raise HTTPForbidden()
+
+
+# @view_config(route_name='create-scenario', renderer='create-scenario.mako')
 def create_scenario(request):
     """
     1. look up data from html form
@@ -250,7 +323,7 @@ def show_scenario(request):
 def find_pop_with(request):
     sc = get_object_or_404(Scenario, request)
     distance = request.json_body.get('d', 1000)
-
+    print(distance)
     return json_response(
         {'total': sc.get_percent_within(distance)}
         )
@@ -287,24 +360,17 @@ def add_new_nodes(request):
     session.add_all(new_nodes)
     return Response(str(new_nodes))
 
-def list_to_dict(param_pairs):
-    new_dict = {}
-    for pair in param_pairs:
-        key = pair[0]
-        val = pair[1]
-        if (not new_dict.has_key(key)):
-            new_dict[key] = []
-        new_dict[key].append(val)
-
-    return new_dict 
 
 @view_config(route_name='remove-scenarios')
 def remove_scenario(request):
     session = DBSession()
     sc_pairs = request.params
-    for sid in sc_pairs.dict_of_lists()['scenarios']:
-        sc = session.query(Scenario).get(int(sid))
-        [session.delete(edge) for edge in sc.get_edges()]
-        [session.delete(node) for node in sc.get_nodes()]
-        session.delete(sc)
+    sc_dict = sc_pairs.dict_of_lists()
+    if (sc_dict.has_key('scenarios')):
+        for sid in sc_pairs.dict_of_lists()['scenarios']:
+            sc = session.query(Scenario).get(int(sid))
+            [session.delete(edge) for edge in sc.get_edges()]
+            [session.delete(node) for node in sc.get_nodes()]
+            session.delete(sc)
+
     return HTTPFound(location=request.route_url('index'))

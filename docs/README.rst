@@ -33,16 +33,20 @@ The following is a brief guide to installing the NeXT application
 
 **Prerequisites**
 
-The following applications/libraries are required by NeXT::
+The following applications/libraries are required by NeXT
 
+::
+
+
+  Python 2.7
+  R (r-base)
+  python-dev
   python-setuptools
   python-virtualenv
-  postgresql-9.0 (and postgresql-server-dev-9.0)
-  PostGIS (see http://postgis.refractions.net/docs/ch02.html)
+  python-pastescript (python lib for paster)
+  postgresql-9.1 (and postgresql-server-dev-9.1)
+  PostGIS 1.5.3+ (see http://postgis.refractions.net/docs/ch02.html)
   (note that PostGIS has several dependencies itself)
-  Python 2.7
-  python-psycopg2 (python lib for postgresql)
-  python-setuptools 
 
 
 **Install & Run**
@@ -51,24 +55,45 @@ The following applications/libraries are required by NeXT::
 
 ::
 
-  git clone git:/github.com/modilabs/NeXT.git
+  git clone git:github.com/modilabs/NeXT.git
 
 2. Setup the virtualenv and activate it
 
-3. Install the python project requirements and deploy the development egg locally
+3. Install numpy via pip (not sure why this doesn't work via setup tools)
+
+::
+
+  pip install numpy 
+
+4. Install the python project requirements and deploy the development egg locally
    
 :: 
 
   python setup.py install
   python setup.py develop
 
-4. Install openlayers javascript libraries into the project's "static" subdir (i.e. <project>/static/openlayers should contain the openlayers js and css files)
+5. Install openlayers javascript libraries into the project's "static" subdir (i.e. <project>/static/openlayers should contain the openlayers js and css files)
 
-5. Run the development server 
+7. Create the 'next' postgresql database and enable postgis extensions
+
+::
+  
+  ./drop-and-create.sh
+
+8. Populate 'next' node_types with population and facility types
+
+::
+
+  
+6. Run the development server 
    
 ::
 
-  paster serve developmen.ini --reload
+  paster serve development.ini --reload
+
+
+7. (optional) Run the production server
+
 
 
 Use Cases

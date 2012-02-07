@@ -124,12 +124,10 @@
   <div class="row">
     <div class="span8" style="width: 270px;">
       <br />
-      <form method="" action="">
         <p>Percent of population within</p>
         <fieldset>
           <input id="distance" type="text" name="distance" value="1000" />
         </fieldset>
-      </form>
       <h2 id="percent"></h2>
     </div>
     <div class="span7" id="holder" style="width: 470px;"></div>
