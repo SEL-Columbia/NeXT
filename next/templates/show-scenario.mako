@@ -15,7 +15,17 @@
 
   <script 
      type="text/javascript"
+     src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.js">
+  </script>
+
+  <script 
+     type="text/javascript"
      src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.16/jquery-ui.js">
+  </script>
+
+  <script 
+     type="text/javascript" 
+     src="${request.application_url}/static/bootstrap/bootstrap-tab.js">
   </script>
 
   <script 
@@ -55,8 +65,11 @@
 
   <script type="text/javascript">
 
-    $(function() { 
+    $(function() {
+      $('.tabs a:first').tab('show')
+    });
 
+    $(function() { 
 
      load_page({'mapDiv': 'scenario-map', 
         'bbox': ${list(scenario.get_bounds().bounds)},
@@ -85,32 +98,48 @@
   <h3>Results for: ${scenario.name}</h3>
   <br />
 
-  <div class="row">
-    <div class="span7">      
-         
-    <a href="#" class="btn" id="auto-add-facilities">Auto-add new facilities</a> 
-	  <form>
-      	  <fieldset>
-	      <label for="facility_distance">Distance</label>
-	      <input type="text" name="facility_distance" id="facility_distance" value="1000" class="text ui-widget-content ui-corner-all" />
-	      <label for="num_facilities">Number of Facilities</label>
-	      <input type="text" name="num_facilities" id="num_facilities" value="1" class="text ui-widget-content ui-corner-all" />
-      	  </fieldset>
-	  </form>
-
+  <!-- <div class="row"> -->
+    <ul class="tabs">
+      <li class="active"><a href="#auto" data-toggle="tab">Auto</a></li>
+      <li><a href="#manual" data-toggle="tab">Manual</a></li>
+    </ul>
+    <div class="tab-content">
+      <div class="tab-pane active" id="auto">
+      <!-- <div class="span7"> -->
+        <form>
+          <div class="row">
+          <div class="span3">
+  	  <label for="facility_distance">Distance</label>
+          </div>
+          <div class="span2">
+  	  <input type="text" name="facility_distance" id="facility_distance" value="1000" maxlength="10" style="width:60px"/>
+          </div>
+          <div class="span3">
+  	  <label for="num_facilities">Number of Facilities</label>
+          </div>
+          <div class="span2">
+  	  <input type="text" name="num_facilities" id="num_facilities" value="1" maxlength="5" style="width:40px"/>
+          </div>
+          <div class="span3">
+          <a href="#" class="btn" id="auto-add-facilities">Add</a> 
+          </div>
+          </div>
+         </form>
+      </div>
+      <div class="tab-pane" id="manual">
+      <!-- <div class="span7"> -->
+        <a href="#" class="btn" id="add-facility">Add</a>
+        <a class="btn" id="stop-editing" href="#" style="display:none">Finish</a>
+        <a id="run-scenario" class="btn disabled" href="#">Re-run scenario</a>
+        <!--
+        <span id="number-features" 
+              class="alert-message success
+                     block-message">
+        </span>      
+        -->
+      </div>
     </div>
-    <div class="span7"> 
-      <a href="#" class="btn" id="add-facility">Manually add new facility</a>
-      <a class="btn" id="stop-editing" href="#" style="display:none">Stop editing</a>
-      <a id="run-scenario" class="btn disabled" href="#">Re-run scenario</a>
-      <!--
-      <span id="number-features" 
-            class="alert-message success
-                   block-message">
-      </span>      
-      -->
-    </div>
-  </div>
+  <!-- </div> -->
   <br /> 
 
   <div class="row">
