@@ -23,3 +23,9 @@ form label {
 #scenario-map { 
     background: #eee;
 } 
+
+
+/* HACK for a stupid Map Data pop-up */
+.olLayerGooglePoweredBy {
+    visibility:hidden;
+}
