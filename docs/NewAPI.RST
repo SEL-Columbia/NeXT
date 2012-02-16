@@ -61,7 +61,7 @@ Outputs: [stage_json]
 Post Inputs: NULL
 Outputs: [scenario]
 
-5. /cloneScenartio
+5. /cloneScenario
 Post Inputs: scenario_name : string
              new_scenario_name : string
 Side-Effects: see (1); new_scenario's parent id is scenario_name's id
