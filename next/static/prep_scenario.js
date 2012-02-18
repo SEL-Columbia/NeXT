@@ -19,30 +19,38 @@ function buildLineGraphParts(id, xyVals, numParts) {
         xVals[i] = tmpXVals.slice(start, end);
         yVals[i] = tmpYVals.slice(start, end);
     }
-	r.g.linechart(30, 30, 270, 220, xVals, yVals, {shade: true, axis: "0 0 1 1", symbol: "o"});
+    r.g.linechart(30, 30, 270, 220, xVals, yVals, {shade: true, axis: "0 0 1 1", symbol: "o"});
 }
 
 function buildLineGraph(r, xyVals, colorRanges) {
 
-	var xVals = [];
-	var yVals = [];
+    var xVals = [];
+    var yVals = [];
     
     var tmpXVals = _.map(xyVals, function(tup) { return tup[0]; });
     var tmpYVals = _.map(xyVals, function(tup) { return tup[1]; });
     
-    var start, end = 1; 
+    var start = end = 0;
     for(var i = 0; i < colorRanges.length; i++) {
-        start = end - 1;
         var upperVal = colorRanges[i][1];
         yVals[i] = _.select(_.rest(tmpYVals, start), function(val) { return val <= upperVal; });
         end = start + yVals[i].length;
         end = (end > xyVals.length) ? xyVals.length: end;
-        xVals[i] = tmpXVals.slice(start, end);
+        //since we're displaying lines for each, we need to ensure that we have
+        //at least 2 points...otherwise, just include these points into adjacent regions
+        if((end - start) > 1) {
+          xVals[i] = tmpXVals.slice(start, end);
+          start = (end == 0) ? 0 : end - 1;
+        }
+        else {
+	  xVals[i] = yVals[i] = []
+        }
     }
     var distColors = _.map(colorRanges, function(tup) { return tup[0]; });
-    //log(xVals);
-    //log(yVals);
-	r.g.linechart(30, 30, 300, 220, xVals, yVals, {shade: true, axis: "0 0 1 1", symbol: "o", colors: distColors});
+    log(xVals);
+    log(yVals);
+    //log(distColors)
+    r.g.linechart(30, 30, 300, 220, xVals, yVals, {shade: true, axis: "0 0 1 1", symbol: "o", colors: distColors});
 }
 
 function drawLegend(r, distColors, x, y) { 

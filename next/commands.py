@@ -1,4 +1,3 @@
-
 import logging
 from paste.script.command import Command
 from pyramid.paster import bootstrap

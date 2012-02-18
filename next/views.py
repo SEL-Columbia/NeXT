@@ -1,3 +1,5 @@
+import logging
+
 from shutil import copyfileobj
 import os
 import csv
@@ -20,6 +22,8 @@ from next.models import NodeType
 from next.models import DBSession
 from next.models import get_node_type
 from next.spatial_utils import pg_import
+
+logger = logging.getLogger(__name__)
 
 def get_object_or_404(cls, request):
     session = DBSession()
@@ -101,14 +105,16 @@ def write_tmp_file(post_file, tmp_file):
     
     
 @view_config(route_name='create-scenario', renderer='create-scenario.mako')
-def create_scenario2(request):
+def create_scenario(request):
     """
     Bulk load the nodes from the population and facility csv's
     """
     if(request.method=='POST'):
         session = DBSession()
         dbapi_conn = session.connection().connection
+        sc = None
         try:
+            logger.debug("Start node population")
             pop_type = get_node_type('population')
             fac_type = get_node_type('facility')
     
@@ -152,69 +158,25 @@ def create_scenario2(request):
             
             #do we need to close the out_pop_stream/fac_stream?
             dbapi_conn.commit()
+            logger.debug("End node population")
         except Exception as error:
             dbapi_conn.rollback()
             raise(error)    
 
             
-        # send the user to the show scenario page right now
-        return HTTPFound(location=request.route_url('run-scenario', id=sc.id))
+        # send the user to the run scenario page right now
+        # at this point, we should have the scenario, so create the edges
+
+        sc.create_edges()
+        return HTTPFound(
+            location=request.route_url('show-scenario', id=sc.id))
+        # return HTTPFound(location=request.route_url('run-scenario', id=sc.id))
         
     elif request.method == 'GET':
         return {}
     else:
         raise HTTPForbidden()
 
-
-# @view_config(route_name='create-scenario', renderer='create-scenario.mako')
-def create_scenario(request):
-    """
-    1. look up data from html form
-    2. create new scenario (allow use to give name)
-    3. upload two csv files
-      -> import the csv files as nodes
-      -> assgin types
-    """
-    session = DBSession()
-    if request.method == 'POST':
-
-        # query for the two node types we are currently using.
-
-        pop_type = get_node_type('population')
-        fac_type = get_node_type('facility')
-
-        # TODO remove these asserts
-        assert pop_type
-        assert fac_type
-
-        name = request.POST['name']
-        # make sure that we have a name
-        # TODO we should
-        assert len(name) != 0
-
-        sc = Scenario(name)
-        session.add(sc)
-        pop_nodes = csv_to_nodes(request, request.POST['pop-csv'],
-                                        sc, pop_type)
-        fac_nodes = csv_to_nodes(request, request.POST['fac-csv'],
-                                      sc, fac_type)
-
-        # TODO, double check to make sure these are being added in
-        # batch mode.
-        session.add_all(pop_nodes)
-        session.add_all(fac_nodes)
-
-        # Chris you are going to hate me... except that I need the
-        # sc.id to send the user to. If I don't call flush, I get a None.
-        # TODO... FIX this.
-        session.flush()
-        # send the user to the show scenario page right now
-        return HTTPFound(location=request.route_url('run-scenario', id=sc.id))
-
-    elif request.method == 'GET':
-        return {}
-    else:
-        raise HTTPForbidden()
 
 
 @view_config(route_name='run-scenario')
@@ -226,42 +188,6 @@ def run_scenario(request):
     return HTTPFound(
         location=request.route_url('show-scenario', id=scenario.id))
 
-"""
-Pushed this into models.Scenario as above
-TODO:  Remove once tested
-@view_config(route_name='run-scenario')
-def run_scenario(request):
-
-    import importlib
-    session = DBSession()
-    # get the scenario
-    scenario = get_object_or_404(Scenario, request)
-
-    pop_type = session.query(NodeType).filter_by(name=u'population').first()
-    fac_type = session.query(NodeType).filter_by(name=u'facility').first()
-    # find all of the nodes that are associated with this scenario
-    sc_nodes = session.query(Node).filter_by(scenario=scenario)
-    pop_nodes = sc_nodes.filter_by(node_type=pop_type)
-    fac_nodes = sc_nodes.filter_by(node_type=fac_type)
-
-    # remove the old edges
-    old_edges = session.query(Edge).filter_by(scenario=scenario)
-    [session.delete(edge) for edge in old_edges]
-
-    # look up the function defined in the settings.ini file
-    func_path = request.registry.settings.get('next.main', None)
-    assert func_path, 'You must configure a function in your settings file'
-    func_module, func_str = func_path.split(':')
-
-    # import the function from a string format
-    # 'module.sub_packge:function_name'
-    func = getattr(importlib.import_module(func_module), func_str)
-    # call the function with the nodes
-    edges = func(scenario, pop_nodes, fac_nodes)
-    session.add_all(edges)
-    return HTTPFound(
-        location=request.route_url('show-scenario', id=scenario.id))
-"""
 
 @view_config(route_name='show-population-json')
 def show_population_json(request):
@@ -368,9 +294,8 @@ def remove_scenario(request):
     sc_dict = sc_pairs.dict_of_lists()
     if (sc_dict.has_key('scenarios')):
         for sid in sc_pairs.dict_of_lists()['scenarios']:
-            sc = session.query(Scenario).get(int(sid))
-            [session.delete(edge) for edge in sc.get_edges()]
-            [session.delete(node) for node in sc.get_nodes()]
-            session.delete(sc)
+            session.query(Edge).filter(Edge.scenario_id==int(sid)).delete()
+            session.query(Node).filter(Node.scenario_id==int(sid)).delete()
+            session.query(Scenario).filter(Scenario.id==int(sid)).delete()
 
     return HTTPFound(location=request.route_url('index'))

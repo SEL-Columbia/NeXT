@@ -62,7 +62,7 @@ var load_page = function  (options) {
         type: OpenLayers.Filter.Comparison.BETWEEN,
         property: "distance",
         lowerBoundary: 2000,
-        upperBoundary: 3999
+        upperBoundary: 2999
       }),
       symbolizer: {
         pointRadius: 4,
@@ -76,7 +76,7 @@ var load_page = function  (options) {
       filter: new OpenLayers.Filter.Comparison({ 
         type: OpenLayers.Filter.Comparison.GREATER_THAN,
         property: "distance",
-        value: 4000
+        value: 2999
     }),
       symbolizer: { 
         pointRadius: 4,
@@ -320,6 +320,7 @@ var load_page = function  (options) {
 	r.g.text(20, 20, "Meters");
 	r.g.text(150, 270, "Population Percentage");
     
+    //buildLineGraph(r, xyVals);
     buildLineGraph(r, xyVals, distColors);
     drawLegend(r, distColors, 340, 50);
     //buildLineGraphParts(r, xyVals, 5);

@@ -5,6 +5,7 @@ Ivan Willig, Chris Natali
 
 """
 
+import logging
 from geoalchemy import Column
 from geoalchemy import GeometryColumn
 from geoalchemy import Point
@@ -24,6 +25,7 @@ from sqlalchemy.sql import text
 from sqlalchemy.sql import func
 from zope.sqlalchemy import ZopeTransactionExtension
 
+logger = logging.getLogger(__name__)
 DBSession = scoped_session(sessionmaker(extension=ZopeTransactionExtension()))
 Base = declarative_base()
 
@@ -79,9 +81,8 @@ class Scenario(Base):
             .filter(Node.scenario_id == self.id)\
             .filter(Edge.distance <= d)\
             .filter(Node.node_type == get_node_type('population'))
-        #print '------------------------------'
         #Check whether we have results
-        if(total.count() > 0):
+        if(total.count() > 0 and (total[0][0] != None)):
             #print total
             return float(total[0][0])
         else:
@@ -128,57 +129,24 @@ class Scenario(Base):
         rset = conn.execute(sql, sc_id=self.id).fetchall()
         return rset
 
+
     def get_partitioned_pop_vs_dist(self, num_partitions=5):
         # This function is only valid when there are edges
         # and the distance between the max/min is > 0
         session = DBSession()
-        ct = session.query(func.count(Edge.id)).filter_by(scenario=self).first()
-        if(ct[0] == 0):
-            return []
-        
         conn = session.connection()
         sql = text(
         '''
-        select max(distance) - min(distance) from edges where scenario_id = :sc_id
+        select * from pop_over_dist(:sc_id, :num_parts)
         ''')
-        dist_diff = conn.execute(sql, sc_id=self.id).first()
 
-        if(dist_diff[0] <= 0):
-            return []
-
-        sql = text(
-        '''
-        select 
-          (sum(cast(weight as float)) / 
-          (select sum(weight) from nodes 
-            where scenario_id = :sc_id and node_type_id=1)) weight,
-          p.distance
-          from 
-          (select weight, e.distance 
-            from edges e, nodes n 
-            where n.node_type_id=1 and 
-            e.from_node_id=n.id and
-            e.scenario_id = :sc_id) pop_dist,
-          (select distance from generate_series(
-                    (select min(distance) from edges 
-                     where scenario_id = :sc_id),
-                    (select max(distance) from edges 
-                     where scenario_id = :sc_id),
-                    (select (max(distance) - min(distance)) / 
-                     :num_parts from edges 
-                     where scenario_id = :sc_id)) 
-                    as distance) p
-          where pop_dist.distance <= p.distance
-          group by p.distance
-          order by p.distance
-        ''')
         rset = conn.execute(
             sql,
             sc_id=self.id,
-            num_parts=num_partitions).fetchall()
+            num_parts=num_partitions)
         return rset
-
         
+
     def get_pop_nodes_outside_distance(self, distance):
         """
         Get the population nodes that are further than distance from their associated facility.
@@ -224,19 +192,16 @@ class Scenario(Base):
         associate population nodes with their nearest facility.
         """
         session = DBSession()
-        pop_type = get_node_type('population')
-        fac_type = get_node_type('facility')
-        nodes = session.query(Node).filter_by(scenario=self)
-        pop_nodes = nodes.filter_by(node_type=pop_type)
-        fac_nodes = nodes.filter_by(node_type=fac_type)
+        conn = session.connection()
+        sql = text(
+        '''
+        select run_near_neigh(:sc_id);
+        ''')
 
-        old_edges = session.query(Edge).filter_by(scenario=self)
-        [session.delete(edge) for edge in old_edges]
-
-        import nn_qt
-        edges = nn_qt.generate_nearest_neighbor(self, pop_nodes, fac_nodes)
-        session.add_all(edges)
-
+        rset = conn.execute(
+            sql,
+            sc_id=self.id)
+        
     
     def create_nodes(self, points, type_string):
         """
