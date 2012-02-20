@@ -149,8 +149,9 @@ def create_scenario(request):
             fac_stream = StringIO.StringIO()
             in_pop_stream = open(tmp_pop_file, 'rU')
             in_fac_stream = open(tmp_fac_file, 'rU')
-            pop_translator.translate(in_pop_stream, pop_stream)
-            fac_translator.translate(in_fac_stream, fac_stream)
+            #TODO:  may want to move srid to configuration at some point
+            pop_translator.translate(in_pop_stream, pop_stream, 4326)
+            fac_translator.translate(in_fac_stream, fac_stream, 4326)
             pop_stream.seek(0)
             fac_stream.seek(0)
             importer.do_import(pop_stream)

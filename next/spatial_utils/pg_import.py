@@ -45,7 +45,7 @@ class CSVToCSV_WKT_Point(object):
         self.point_columns = point_columns
         self.new_columns = new_columns
 
-    def translate(self, in_file_stream, out_file_stream):
+    def translate(self, in_file_stream, out_file_stream, srid):
         """ Translates csv with lat,lon as separate columns into a csv
         with lat,lon as a single WKT POINT column.  
         writes to an IO stream the csv as lines to be stored."""
@@ -55,7 +55,7 @@ class CSVToCSV_WKT_Point(object):
             if (len(row) == 0):
                 continue
 
-            point = 'POINT(%s %s)' % (row[self.point_columns[0]], row[self.point_columns[1]])
+            point = 'SRID=%s;POINT(%s %s)' % (srid, row[self.point_columns[0]], row[self.point_columns[1]])
             col_inds = set(range(0, len(row))).difference(set([self.point_columns[0], self.point_columns[1]]))
             col_inds = col_inds.union(set(self.new_columns.keys()))
  
