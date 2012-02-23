@@ -186,6 +186,10 @@ def run_scenario(request):
     session = DBSession()
     scenario = get_object_or_404(Scenario, request)
     scenario.create_edges()
+    # need to do an explicit commit here since no SQLAlchemy
+    # objects were written (therefore SQLAlchemy doesn't think it needs to 
+    # commit)
+    session.connection().connection.commit()
     return HTTPFound(
         location=request.route_url('show-scenario', id=scenario.id))
 
