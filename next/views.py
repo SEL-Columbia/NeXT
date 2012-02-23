@@ -250,7 +250,6 @@ def show_scenario(request):
 def find_pop_with(request):
     sc = get_object_or_404(Scenario, request)
     distance = request.json_body.get('d', 1000)
-    print(distance)
     return json_response(
         {'total': sc.get_percent_within(distance)}
         )
@@ -261,12 +260,15 @@ def create_facilities(request):
     """
     Create new facilities based on distance and re-create the nearest neighbor edges.  Display the new output
     """
+    session = DBSession()
     sc = get_object_or_404(Scenario, request)
     distance = float(request.json_body.get('d', 1000))
     num_facilities = int(request.json_body.get('n', 1))
 
     centroids = sc.locate_facilities(distance, num_facilities)
     sc.create_nodes(centroids, 'facility')
+    # need to flush so that create_edges knows about new nodes
+    session.flush()
     sc.create_edges()
     return HTTPFound(
         location=request.route_url('show-scenario', id=sc.id))
