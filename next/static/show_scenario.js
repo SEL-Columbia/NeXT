@@ -264,7 +264,7 @@ var load_page = function  (options) {
       data: JSON.stringify({'d': $('#distance').val() }),
       contentType: 'application/json; charset=utf-8',
       success: function(data) { 
-        var pct = Math.floor(data.total * 10000) / 100;
+        var pct = Math.floor((data.total * 10000) / 100);
         $('#percent').text("" + pct + "%");
       }
       
@@ -315,14 +315,14 @@ var load_page = function  (options) {
       ['#0c2c84', Infinity, "Under " + formattedMaxY + "km"]
    	];
 
-	var r = Raphael('holder');
-	r.g.txtattr.font = "12px 'Fontin Sans', Fontin-Sans, sans-serif";
-	r.g.text(20, 20, "Meters");
-	r.g.text(150, 270, "Population Percentage");
+    var r = Raphael('holder');
+    r.g.txtattr.font = "12px 'Fontin Sans', Fontin-Sans, sans-serif";
+    r.g.text(20, 20, "Meters");
+    r.g.text(150, 270, "Population Percentage");
     
     //buildLineGraph(r, xyVals);
     buildLineGraph(r, xyVals, distColors);
-    drawLegend(r, distColors, 340, 50);
+    drawLegend(r, distColors, 360, 50);
     //buildLineGraphParts(r, xyVals, 5);
   });
 };
