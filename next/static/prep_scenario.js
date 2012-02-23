@@ -50,7 +50,7 @@ function buildLineGraph(r, xyVals, colorRanges) {
     log(xVals);
     log(yVals);
     //log(distColors)
-    r.g.linechart(30, 30, 300, 220, xVals, yVals, {shade: true, axis: "0 0 1 1", symbol: "o", colors: distColors});
+    r.g.linechart(50, 30, 300, 220, xVals, yVals, {shade: true, axis: "0 0 1 1", symbol: "o", colors: distColors});
 }
 
 function drawLegend(r, distColors, x, y) { 

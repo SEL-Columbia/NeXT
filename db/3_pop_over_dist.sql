@@ -1,7 +1,7 @@
 CREATE OR REPLACE FUNCTION pop_over_dist(
   scenario_id integer,   
   num_partitions integer)
-  RETURNS TABLE (pop double precision, distance integer)
+  RETURNS TABLE (pop double precision, distance bigint)
   AS 
 $$ 
   WITH dists AS 
@@ -9,7 +9,11 @@ $$
     (SELECT min(distance) FROM edges WHERE scenario_id=$1), 
     (SELECT max(distance) FROM edges WHERE scenario_id=$1),
     (SELECT max(distance) FROM 
-      (SELECT 1 distance UNION ALL SELECT (max(distance) - min(distance)) / $2 distance FROM edges
+      (SELECT 1 distance UNION ALL SELECT (max(distance) - min(distance)) / 
+        (SELECT min(ct) FROM (
+              SELECT $2 ct UNION ALL 
+              SELECT (count(*) - 1) ct FROM edges WHERE scenario_id=$1) a) 
+            distance FROM edges
       WHERE scenario_id=$1) a )) distance)
   SELECT 
     (sum(cast(weight as float)) / 

@@ -1,0 +1,17 @@
+pyramid
+simplejson
+gunicorn
+geojson
+psycopg2
+pyyaml
+numpy
+rpy2
+Shapely
+-e git+git://github.com/chrisnatali/geoalchemy.git#egg=geoalchemy
+colander
+SQLAlchemy
+transaction
+pyramid_tm
+pyramid_debugtoolbar
+zope.interface>=3.8.0
+zope.sqlalchemy

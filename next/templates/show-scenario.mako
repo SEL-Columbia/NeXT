@@ -151,7 +151,7 @@
   </div>
 
   <div class="row">
-    <div class="span8" style="width: 270px;">
+    <div class="span7" style="width: 270px;">
       <br />
         <p>Percent of population within</p>
         <fieldset>
@@ -159,7 +159,7 @@
         </fieldset>
       <h2 id="percent"></h2>
     </div>
-    <div class="span7" id="holder" style="width: 470px;"></div>
+    <div class="span8" id="holder" style="width: 470px;"></div>
   </div>
 
 </%def>

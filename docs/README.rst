@@ -70,7 +70,7 @@ The following applications/libraries are required by NeXT
    
 :: 
 
-  python setup.py install
+  pip install -r requirements.txt
   python setup.py develop
 
 5. Install openlayers javascript libraries into the project's "static" subdir (i.e. <project>/static/openlayers should contain the openlayers js and css files)
@@ -86,6 +86,11 @@ The following applications/libraries are required by NeXT
 ::
 
   paster import-fixtures <production | development>.ini fixtures.yaml  
+
+9. Load Custom DB Functions
+
+::
+  ./load-sql.sh
   
 9. Run the development server 
    
