@@ -159,7 +159,7 @@
         </fieldset>
       <h2 id="percent"></h2>
     </div>
-    <div class="span8" id="holder" style="width: 470px;"></div>
+    <div class="span8" id="holder" style="width: 490px;"></div>
   </div>
 
 </%def>
