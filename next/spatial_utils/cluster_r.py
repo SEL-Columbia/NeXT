@@ -36,13 +36,13 @@ def hclust(pts, distance, clust_method="single", use_great_circle=True):
     # belong to cluster number 1
     #
     # We want to return a list of clusters, each containing
-    # the actual points, so we map them here.  
+    # the index to the original point, so we map them here.  
     #
     # Things are a little more confusing since R counts arrays
     # from 1, python from 0 (hence the "- 1" from the cluster index)
     list_of_pts = [[] for i in range(max(clusters))]
     for j in range(0, len(clusters)):
-        list_of_pts[clusters[j] - 1].append(pts[j])
+        list_of_pts[clusters[j] - 1].append(j)
 
     
     return list_of_pts

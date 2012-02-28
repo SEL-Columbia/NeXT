@@ -119,14 +119,18 @@ class Scenario(Base):
         rset = conn.execute(sql, srid=srid, sc_id=self.id)
         return loads(rset.fetchone()[0])
 
-    def get_population_vs_distance(self):
+    def get_population_vs_distance(self, num_partitions=5):
         session = DBSession()
         conn = session.connection()
         sql = text(
-        '''select nodes.weight, edges.distance from nodes, edges
-           where edges.from_node_id = nodes.id and nodes.scenario_id = :sc_id
-           order by edges.distance ''')
-        rset = conn.execute(sql, sc_id=self.id).fetchall()
+        '''
+        select * from density_over_dist(:sc_id, :num_parts)
+        ''')
+
+        rset = conn.execute(
+                sql, 
+                sc_id=self.id,
+                num_parts=num_partitions)
         return rset
 
 
@@ -170,20 +174,36 @@ class Scenario(Base):
         pts = get_coords(pop_nodes)
         km = distance / 1000.0
         from spatial_utils import cluster_r, util
+
+        # Alter cluster_r to only send back indices of
+        # points, not clusters themselves
         clusters = cluster_r.hclust(pts, km, "average")
-        clusters.sort(key=len, reverse=True)
-        k_clusts = []
-        if num_facilities > len(clusters):
-            k_clusts = clusters
-        else:
-            k_clusts = clusters[0:num_facilities]
+        cluster_nodes = []
+        for i in range(0, len(clusters)):
+            cluster_nodes.append([])
+            for j in range(0, len(clusters[i])):
+                cluster_nodes[i].append(pop_nodes[clusters[i][j]])
             
         centroids = []
-        for cluster in k_clusts:
-            unzipped = zip(*cluster)
-            centroids.append(util.points_to_centroid(unzipped))
+        for cluster in cluster_nodes:
+            pts = get_coords(cluster)
+            unzipped = zip(*pts)
+            pt = util.points_to_centroid(unzipped)
+            weights = map(lambda x: x.weight, cluster)
+            weight = sum(weights)
+            geom = WKTSpatialElement('POINT(%s %s)' % (pt[0], pt[1]))
+            node = Node(geom, weight, get_node_type('facility'), self)
+            centroids.append(node)
 
-        return centroids
+        centroids.sort(key=lambda x: x.weight, reverse=True)
+
+        k_clusts = []
+        if num_facilities > len(centroids):
+            k_clusts = centroids
+        else:
+            k_clusts = centroids[0:num_facilities]
+
+        return k_clusts
         
 
     def create_edges(self):

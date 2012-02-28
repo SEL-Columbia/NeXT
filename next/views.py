@@ -235,7 +235,7 @@ def show_facility_json(request):
 @view_config(route_name='graph-scenario')
 def graph_scenario(request):
     sc = get_object_or_404(Scenario, request)
-    return json_response(map(list, sc.get_population_vs_distance()))
+    return json_response(map(list, sc.get_population_vs_distance(num_partitions=20)))
 
 @view_config(route_name='graph-scenario-cumul')
 def graph_scenario_cumul(request):
@@ -270,7 +270,8 @@ def create_facilities(request):
     num_facilities = int(request.json_body.get('n', 1))
 
     centroids = sc.locate_facilities(distance, num_facilities)
-    sc.create_nodes(centroids, 'facility')
+    session.add_all(centroids)
+
     # need to flush so that create_edges knows about new nodes
     session.flush()
     sc.create_edges()

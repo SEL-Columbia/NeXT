@@ -297,6 +297,35 @@ var load_page = function  (options) {
   });
   */
 
+  $.getJSON(options.graph_density_url, function(data){
+    //don't do anything if there's no data
+    if(data.length == 0) {
+      return;
+    }
+    var x = 0;
+
+    var xyVals = _.map(data, function(tup) { return [tup[0], tup[1] * 100]; });
+    var maxX = Math.max.apply(null, _.map(data, function(tup) { return tup[0]; }));
+    var formattedMaxX = Math.floor((maxX / 1000) * 100) / 100;
+    var distColors = [
+      //   color, max, description
+      ['#c7e9b4', 1000, 'Under 1km'],
+      ['#7fcdbb', 2000, 'Under 2km'],
+      ['#41b6c4', 3000, 'Under 3km'],
+      ['#0c2c84', Infinity, "Under " + formattedMaxX + "km"]
+    ];
+
+    var r = Raphael('holder');
+    r.g.txtattr.font = "12px 'Fontin Sans', Fontin-Sans, sans-serif";
+    r.g.text(40, 20, "% Population");
+    r.g.text(200, 270, "Distance (meters)");
+    
+    //buildLineGraph(r, xyVals);
+    buildLineGraph(r, xyVals, distColors);
+    drawLegend(r, distColors, 360, 50);
+    //buildLineGraphParts(r, xyVals, 5);
+  });
+
   $.getJSON(options.graph_cumul_url, function(data){
     //don't do anything if there's no data
     if(data.length == 0) {
@@ -304,25 +333,21 @@ var load_page = function  (options) {
     }
     var x = 0;
 
-    var xyVals = _.map(data, function(tup) { return [tup[0] * 100, tup[1]]; });
-    var maxY = Math.max.apply(null, _.map(data, function(tup) { return tup[1]; }));
-    var formattedMaxY = Math.floor((maxY / 1000) * 100) / 100;
+    var xyVals = _.map(data, function(tup) { return [tup[0], tup[1] * 100]; });
+    var maxX = Math.max.apply(null, _.map(data, function(tup) { return tup[0]; }));
+    var formattedMaxX = Math.floor((maxX / 1000) * 100) / 100;
     var distColors = [
       //   color, max, description
       ['#c7e9b4', 1000, 'Under 1km'],
       ['#7fcdbb', 2000, 'Under 2km'],
       ['#41b6c4', 3000, 'Under 3km'],
-      ['#0c2c84', Infinity, "Under " + formattedMaxY + "km"]
-   	];
+      ['#0c2c84', Infinity, "Under " + formattedMaxX + "km"]
+    ];
 
     var r = Raphael('holder');
-    r.g.txtattr.font = "12px 'Fontin Sans', Fontin-Sans, sans-serif";
-    r.g.text(20, 20, "Meters");
-    r.g.text(150, 270, "Population Percentage");
     
     //buildLineGraph(r, xyVals);
     buildLineGraph(r, xyVals, distColors);
-    drawLegend(r, distColors, 360, 50);
     //buildLineGraphParts(r, xyVals, 5);
   });
 };

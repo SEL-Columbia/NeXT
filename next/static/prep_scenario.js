@@ -33,24 +33,24 @@ function buildLineGraph(r, xyVals, colorRanges) {
     var start = end = 0;
     for(var i = 0; i < colorRanges.length; i++) {
         var upperVal = colorRanges[i][1];
-        yVals[i] = _.select(_.rest(tmpYVals, start), function(val) { return val <= upperVal; });
-        end = start + yVals[i].length;
+        xVals[i] = _.select(_.rest(tmpXVals, start), function(val) { return val <= upperVal; });
+        end = start + xVals[i].length;
         end = (end > xyVals.length) ? xyVals.length: end;
         //since we're displaying lines for each, we need to ensure that we have
         //at least 2 points...otherwise, just include these points into adjacent regions
         if((end - start) > 1) {
-          xVals[i] = tmpXVals.slice(start, end);
+          yVals[i] = tmpYVals.slice(start, end);
           start = (end == 0) ? 0 : end - 1;
         }
         else {
-	  xVals[i] = yVals[i] = []
+	  yVals[i] = xVals[i] = []
         }
     }
     var distColors = _.map(colorRanges, function(tup) { return tup[0]; });
-    log(xVals);
-    log(yVals);
+    //log(xVals);
+    //log(yVals);
     //log(distColors)
-    r.g.linechart(50, 30, 300, 220, xVals, yVals, {shade: true, axis: "0 0 1 1", colors: distColors});
+    r.g.linechart(50, 30, 300, 220, xVals, yVals, {shade: false, axis: "0 0 1 1", colors: distColors});
 }
 
 function drawLegend(r, distColors, x, y) { 
