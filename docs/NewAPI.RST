@@ -44,7 +44,7 @@ API
 ---
 
 General Guidelines:
-- Follow the routing principals of Rails specified here:
+- Follow the routing principles of Rails specified here:
   http://guides.rubyonrails.org/routing.html
   With the exception that PUT (update) and DELETE are replaced by:
   PUT -> /<noun>/:id/update
