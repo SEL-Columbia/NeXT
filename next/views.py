@@ -21,7 +21,7 @@ from next.models import Edge
 from next.models import NodeType
 from next.models import DBSession
 from next.models import get_node_type
-from next.spatial_utils import pg_import
+from spatial_utils import pg_import
 
 logger = logging.getLogger(__name__)
 

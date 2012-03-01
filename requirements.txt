@@ -8,6 +8,7 @@ numpy
 rpy2
 Shapely
 -e git+git://github.com/chrisnatali/geoalchemy.git#egg=geoalchemy
+-e git+git://github.com/chrisnatali/spatial_utils.git#egg=spatial_utils
 colander
 SQLAlchemy
 transaction
