@@ -6,8 +6,8 @@ CREATE OR REPLACE FUNCTION density_over_dist(
 $$ 
   WITH dists AS 
   (SELECT actual.distance actual_dist, offset_dist.distance offset_dist FROM 
-    (SELECT row_number() over () row_num, * FROM uniform_sample_dists($1, $2)) actual,
-    (SELECT (row_number() over () - 1) row_num, * FROM uniform_sample_dists($1, $2) OFFSET 1) offset_dist
+    (SELECT row_number() over () row_num, * FROM uniform_dists($1, $2)) actual,
+    (SELECT (row_number() over () - 1) row_num, * FROM uniform_dists($1, $2) OFFSET 1) offset_dist
   WHERE actual.row_num=offset_dist.row_num)
   SELECT 
     d.distance,

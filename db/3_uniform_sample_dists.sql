@@ -8,13 +8,13 @@ $$
     (SELECT row_num FROM generate_series(
       (SELECT 1), 
       (SELECT count(*) FROM edges WHERE scenario_id=$1),
-      (SELECT max(distance) FROM 
-        (SELECT 1 distance UNION ALL SELECT count(*) / 
+      (SELECT max(ct) FROM 
+        (SELECT 1 ct UNION ALL SELECT count(*) / 
           (SELECT min(ct) FROM (
                 SELECT $2 ct UNION ALL 
                 SELECT (count(*) - 1) ct FROM edges WHERE scenario_id=$1) num_parts_and_total) 
               num_parts FROM edges
-        WHERE scenario_id=$1) one_and_min_parts)) row_num) samples,
+        WHERE scenario_id=$1) parts_per )) row_num) samples,
      (SELECT row_number() over () row_num, distance FROM
        (SELECT distance FROM edges WHERE scenario_id=$1
         ORDER BY distance) ordered_dists) ordered_dists_row_nums
