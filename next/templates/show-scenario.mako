@@ -76,7 +76,7 @@
         'json_url' : '${request.route_url('show-population-json', id=scenario.id)}',
         'fac_url'  : '${request.route_url('show-facility-json', id=scenario.id)}',
         'graph_cumul_url': '${request.route_url('graph-scenario-cumul', id=scenario.id)}',
-        'graph_density_url': '${request.route_url('graph-scenario', id=scenario.id)}',
+        ///'graph_density_url': '${request.route_url('graph-scenario', id=scenario.id)}',
         'new_node_url': '${request.route_url('add-new-nodes', id=scenario.id)}',
         'percent_within': '${request.route_url('find-pop-within', id=scenario.id)}',
         'create_facilities': '${request.route_url('create-facilities', id=scenario.id)}',
@@ -146,7 +146,6 @@
     <div id="scenario-map" 
          class="span16" 
          style="height: 300px;padding-top: 10px;">    
-
     </div>
   </div>
 

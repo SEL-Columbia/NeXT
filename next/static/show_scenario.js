@@ -297,7 +297,7 @@ var load_page = function  (options) {
   });
   */
 
-  $.getJSON(options.graph_density_url, function(data){
+  $.getJSON(options.graph_cumul_url, function(data){
     //don't do anything if there's no data
     if(data.length == 0) {
       return;
@@ -326,7 +326,8 @@ var load_page = function  (options) {
     //buildLineGraphParts(r, xyVals, 5);
   });
 
-  $.getJSON(options.graph_cumul_url, function(data){
+
+  $.getJSON(options.graph_density_url, function(data){
     //don't do anything if there's no data
     if(data.length == 0) {
       return;
@@ -350,4 +351,5 @@ var load_page = function  (options) {
     buildLineGraph(r, xyVals, distColors);
     //buildLineGraphParts(r, xyVals, 5);
   });
+
 };
