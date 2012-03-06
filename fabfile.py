@@ -60,10 +60,15 @@ def setup(deployment):
     pull(deployment)
     run('mkdir -p %s' % env.project_tmp_directory)
     with cd(env.project_tmp_directory):
+
+        # because we use an OLD version of bootstrap, we're kinda screwed
+        # NEED TO UPGRADE OR REMOVE DEPENDENCY ON BOOTSTRAP
         #run("wget http://twitter.github.com/bootstrap/assets/bootstrap.zip")
-        run("unzip -u bootstrap.zip")
-        #with cd("bootstrap"):
+        #run("unzip -u bootstrap.zip")
+
+         #with cd("bootstrap"):
             #run("wget http://twitter.github.com/bootstrap/assets/js/bootstrap-tab.js")
+   
 
         #run("wget http://openlayers.org/download/OpenLayers-2.11.zip")
         #run("unzip -u OpenLayers-2.11.zip")

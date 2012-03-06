@@ -3,7 +3,7 @@
   <head>
     
     <link rel="stylesheet"
-          href="${request.application_url}/static/bootstrap/css/bootstrap.min.css"
+          href="${request.application_url}/static/bootstrap/bootstrap.min.css"
           type="text/css" 
           media="screen" />
 
