@@ -1,6 +1,6 @@
 import os
 
-from fabric.api import env, run, cd
+from fabric.api import env, run, cd, settings
 # from fabric.decorators import hosts
 
 DEFAULTS = {
@@ -45,12 +45,19 @@ def deploy(deployment):
     run_in_virtualenv("pip install -r %s" % env.pip_requirements_file)
     with cd(env.src_directory):
         run("sudo su postgres ./load-sql.sh")
-        
+        run_in_virtualenv("python setup.py install")
+    
     run('touch %s' % env.wsgi_file)
 
 
 def pull(deployment):
     setup_env(deployment)
+    with settings(warn_only=True):
+        if run("test -d %s" % env.src_directory).failed:
+            with cd(env.project_directory):
+                run("git clone git://github.com/modilabs/NeXT.git")
+                run("virtualenv NeXT")
+
     with cd(env.src_directory):
         run("git pull origin %(branch)s" % env)
         run('find . -name "*.pyc" | xargs rm -rf')
@@ -70,8 +77,8 @@ def setup(deployment):
             #run("wget http://twitter.github.com/bootstrap/assets/js/bootstrap-tab.js")
    
 
-        #run("wget http://openlayers.org/download/OpenLayers-2.11.zip")
-        #run("unzip -u OpenLayers-2.11.zip")
+        run("wget http://openlayers.org/download/OpenLayers-2.11.zip")
+        run("unzip -u OpenLayers-2.11.zip")
         with cd(os.path.join("OpenLayers-2.11", "build")):
             run("./build.py")
 
@@ -84,6 +91,6 @@ def setup(deployment):
             run("cp %s %s" % (open_layers_js_path, open_layers_path))
 
         static_dir = os.path.join(env.src_directory, "next", "static")
-        run("cp -R %s %s" % ("bootstrap", static_dir))
+        # run("cp -R %s %s" % ("bootstrap", static_dir))
         run("cp -R %s %s" % ("openlayers", static_dir))
         
