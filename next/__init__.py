@@ -18,7 +18,8 @@ def main(global_config, **settings):
     config.add_route('remove-scenarios', '/scenarios/remove')
 
     config.add_route('create-scenario', '/scenario/new')
-    config.add_route('show-scenario', '/scenario/{id}')
+    config.add_route('show-scenario', '/scenarios/{id}')
+    config.add_route('show-nodes', '/scenarios/{id}/nodes')
     config.add_route('run-scenario', '/scenario/{id}/run')
     config.add_route('add-new-nodes', '/scenario/{id}/new-nodes'),
     config.add_route('find-pop-within', '/scenario/{id}/find-pop-within')
@@ -26,8 +27,6 @@ def main(global_config, **settings):
     config.add_route('graph-scenario', '/scenario/{id}/graph-data')
     config.add_route('graph-scenario-cumul', '/scenario/{id}/graph-data-cumul')
 
-    config.add_route('show-population-json', '/scenario/{id}/population')
-    config.add_route('show-facility-json', 'scenario/{id}/facilities')
     config.add_route('create-facilities', 'scenario/{id}/create-facilities')
 
     config.scan()

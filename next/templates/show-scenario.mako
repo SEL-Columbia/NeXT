@@ -73,8 +73,8 @@
 
      load_page({'mapDiv': 'scenario-map', 
         'bbox': ${list(scenario.get_bounds().bounds)},
-        'json_url' : '${request.route_url('show-population-json', id=scenario.id)}',
-        'fac_url'  : '${request.route_url('show-facility-json', id=scenario.id)}',
+        'pop_url': '${request.route_url('show-nodes',id=scenario.id,_query=dict([('type','population')]))}',
+        'fac_url': '${request.route_url('show-nodes',id=scenario.id,_query=dict([('type','facility')]))}',
         'graph_cumul_url': '${request.route_url('graph-scenario-cumul', id=scenario.id)}',
         ///'graph_density_url': '${request.route_url('graph-scenario', id=scenario.id)}',
         'new_node_url': '${request.route_url('add-new-nodes', id=scenario.id)}',

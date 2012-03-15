@@ -24,7 +24,7 @@ var load_page = function  (options) {
     
     var style = new OpenLayers.Style({
       'stroke': true,
-      'stroleColor': '#808080'
+      'strokeColor': '#808080'
     });
   
     var ruleLow = new OpenLayers.Rule({
@@ -92,7 +92,7 @@ var load_page = function  (options) {
       strategies: [new OpenLayers.Strategy.Fixed()],
       styleMap:  style,
       protocol: new OpenLayers.Protocol.HTTP({
-        url: options.json_url,
+        url: options.pop_url,
         format: new OpenLayers.Format.GeoJSON()
         
       })

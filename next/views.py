@@ -29,7 +29,7 @@ def get_object_or_404(cls, request):
     session = DBSession()
     id = request.matchdict.get('id', None)
     if id is None:
-        raise NameError('You have id in your request matchdict')
+        raise NameError('You have no id in your request matchdict')
     obj = session.query(cls).get(id)
     if obj is not None:
         return obj
@@ -109,6 +109,7 @@ def create_scenario(request):
     """
     Bulk load the nodes from the population and facility csv's
     """
+            
     if(request.method=='POST'):
         session = DBSession()
         dbapi_conn = session.connection().connection
@@ -128,7 +129,7 @@ def create_scenario(request):
             session.flush()
             pop_file = request.POST['pop-csv']
             fac_file = request.POST['fac-csv']
-            
+
             tmp_pop_file = os.path.join(
                 request.registry.settings['next.temporary_folder'],
                 pop_file.filename
@@ -158,16 +159,19 @@ def create_scenario(request):
             importer.do_import(fac_stream)
             
             #do we need to close the out_pop_stream/fac_stream?
-            dbapi_conn.commit()
+            #TODO:  Figure out how to participate in the 
+            #SQL Alchemy transaction...otherwise, this is 
+            #difficult to test
+            # dbapi_conn.commit()
             logger.debug("End node population")
         except Exception as error:
-            dbapi_conn.rollback()
+            # dbapi_conn.rollback()
             raise(error)    
 
             
         # send the user to the run scenario page right now
         # at this point, we should have the scenario, so create the edges
-
+        # session.commit()
         sc.create_edges()
         return HTTPFound(
             location=request.route_url('show-scenario', id=sc.id))
@@ -182,54 +186,71 @@ def create_scenario(request):
 
 @view_config(route_name='run-scenario')
 def run_scenario(request):
-    
     session = DBSession()
     scenario = get_object_or_404(Scenario, request)
     scenario.create_edges()
     # need to do an explicit commit here since no SQLAlchemy
     # objects were written (therefore SQLAlchemy doesn't think it needs to 
     # commit)
-    session.connection().connection.commit()
+    # session.connection().connection.commit()
     return HTTPFound(
         location=request.route_url('show-scenario', id=scenario.id))
 
 
-@view_config(route_name='show-population-json')
-def show_population_json(request):
+def to_geojson_feature_collection(features):
+    "Returns list of entities as a GeoJSON feature collection"
+    return json_response(
+            {'type': 'FeatureCollection',
+             'features': [feat.to_geojson() for feat in features]})
+
+
+@view_config(route_name='show-nodes')
+def show_nodes(request):
+    session = DBSession()
+    scenario = get_object_or_404(Scenario, request)
+    nodes = []
+    if (request.GET.has_key("type")):
+        request_node_type = request.GET["type"]
+        if(request_node_type == "population"):
+            return show_population_json(scenario)
+        else: 
+            nodes = scenario.get_nodes().\
+                filter_by(node_type=get_node_type(request_node_type))
+    else:
+        nodes = scenario.get_nodes()
+
+    return to_geojson_feature_collection(nodes)
+
+
+def show_population_json(scenario):
     session = DBSession()
     conn = session.connection()
-    sc = get_object_or_404(Scenario, request)
     sql = text('''
     select nodes.id,
+    nodetypes.name,
     nodes.weight,
     st_asgeojson(nodes.point),
-    edges.distance, nodetypes.name
+    edges.distance 
     from nodes, edges, nodetypes
     where nodes.scenario_id = :sc_id and
     nodes.id = edges.from_node_id and
-    nodes.node_type_id = nodetypes.id
+    nodes.node_type_id = nodetypes.id and
+    nodetypes.name='population'
     ''')
-    rset = conn.execute(sql, sc_id=sc.id).fetchall()
+    rset = conn.execute(sql, sc_id=scenario.id).fetchall()
     feats = [
         {
         'type': 'Feature',
-        'geometry': simplejson.loads(feat[2]),
+        'geometry': simplejson.loads(feat[3]),
         'properties': {
-            'distance': feat[3],
-            'type':feat[4] }
+            'id':feat[0],
+            'type':feat[1],
+            'weight':feat[2],
+            'distance': feat[4]
+            }
         } for feat in rset
-     ]
+    ]
     return json_response({'type': 'FeatureCollection', 'features': feats })
-
-
-@view_config(route_name='show-facility-json')
-def show_facility_json(request):
-    sc = get_object_or_404(Scenario, request)
-    nodes = sc.get_nodes().filter_by(node_type=get_node_type('facility'))
-    return json_response(
-        {'type': 'FeatureCollection',
-         'features': [feat.to_geojson() for feat in nodes]}
-        )
 
 
 @view_config(route_name='graph-scenario')
@@ -237,11 +258,13 @@ def graph_scenario(request):
     sc = get_object_or_404(Scenario, request)
     return json_response(map(list, sc.get_population_vs_distance(num_partitions=20)))
 
+
 @view_config(route_name='graph-scenario-cumul')
 def graph_scenario_cumul(request):
     sc = get_object_or_404(Scenario, request)
     return json_response(map(list, 
         sc.get_partitioned_pop_vs_dist(num_partitions=100)))
+
 
 @view_config(route_name='show-scenario', renderer='show-scenario.mako')
 def show_scenario(request):

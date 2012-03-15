@@ -2,6 +2,6 @@
 
 files=`ls db/*.sql`
 for file in $files;
-  do psql -d next -f $file
+  do psql -d $1 -f $file
 done
 

@@ -24,6 +24,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import text
 from sqlalchemy.sql import func
 from zope.sqlalchemy import ZopeTransactionExtension
+import shapely
 
 logger = logging.getLogger(__name__)
 DBSession = scoped_session(sessionmaker(extension=ZopeTransactionExtension()))
@@ -94,14 +95,23 @@ class Scenario(Base):
         subset = self.get_total_population_within(d)
         return subset / total
 
+
     def to_geojson(self):
         bounds = self.get_bounds(srid=4326)
+        coords = []
+        if (bounds):
+            if (isinstance(bounds, shapely.geometry.point.Point)):
+                coords = bounds.bounds
+            else:
+                coords = list(bounds.exterior.coords)
+
         return {'type': 'Feature',
-                'properties': {'id': self.id},
+                'properties': {'id': self.id, 'name': self.name},
                 'geometry':
                 {'type': 'LineString',
-                 'coordinates': list(bounds.exterior.coords)
+                 'coordinates': coords
                  }}
+
 
     def get_bounds(self, srid=900913):
         """
@@ -117,7 +127,12 @@ class Scenario(Base):
                from nodes where scenario_id = :sc_id''')
         #TODO:  Handle case where no nodes in scenario
         rset = conn.execute(sql, srid=srid, sc_id=self.id)
-        return loads(rset.fetchone()[0])
+        if (rset.rowcount > 0):
+            rset1 = rset.fetchone()[0]
+            if(rset1):
+                return loads(rset1)
+
+        return None
 
     def get_population_vs_distance(self, num_partitions=5):
         session = DBSession()
@@ -297,8 +312,9 @@ class Node(Base):
                 {'type': point.type,
                  'coordinates': point.coords[0]
                  },
-                 'properties': {'type': self.node_type.name,
-                                'id': self.id }
+                 'properties': {'id': self.id, 
+                                'type': self.node_type.name,
+                                'weight': self.weight }
                 }
 
 

@@ -100,8 +100,9 @@ General Guidelines:
    params:
         [name]:  performs a search for scenarios by name
  
-   returns:  list of scenario json representation (media-type=json) OR
+   returns:  list of scenario geojson representation (media-type=json) OR
              html rep of list (media-type=html)      
+             scenario geometry is simply a list of points as it's BBox
  
 4. delete-scenarios: route='/scenarios/delete', request_method='GET'
 
@@ -120,7 +121,7 @@ General Guidelines:
        [opt] stage_start:  begin stage number
        [opt] stage_end:  end stage number
 
-   returns:  list of node json representations (media-type=json)
+   returns:  list of node geojson representations (media-type=json)
 
 6. show-edges: route='/scenarios/:id', request_method='GET'
 
