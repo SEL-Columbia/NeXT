@@ -19,7 +19,7 @@ def main(global_config, **settings):
 
     config.add_route('create-scenario', '/scenario/new')
     config.add_route('show-scenario', '/scenarios/{id}')
-    config.add_route('show-nodes', '/scenarios/{id}/nodes')
+    config.add_route('nodes', '/scenarios/{id}/nodes')
     config.add_route('run-scenario', '/scenario/{id}/run')
     config.add_route('add-new-nodes', '/scenario/{id}/new-nodes'),
     config.add_route('find-pop-within', '/scenario/{id}/find-pop-within')

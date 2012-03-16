@@ -186,6 +186,8 @@ def create_scenario(request):
 
 @view_config(route_name='run-scenario')
 def run_scenario(request):
+    """ Create the nearest-neighbor edges """
+
     session = DBSession()
     scenario = get_object_or_404(Scenario, request)
     scenario.create_edges()
@@ -204,8 +206,14 @@ def to_geojson_feature_collection(features):
              'features': [feat.to_geojson() for feat in features]})
 
 
-@view_config(route_name='show-nodes')
+@view_config(route_name='nodes', request_method='GET')
 def show_nodes(request):
+    """ 
+    Returns nodes as geojson
+    type parameter used as a filter
+    If type=='population', then add nearest-neighbor distance to output
+    """
+
     session = DBSession()
     scenario = get_object_or_404(Scenario, request)
     nodes = []
@@ -315,6 +323,27 @@ def add_new_nodes(request):
         node = Node(geom, 1, facility_type, sc)
         new_nodes.append(node)
     session.add_all(new_nodes)
+    return Response(str(new_nodes))
+
+
+@view_config(route_name='nodes', request_method='POST')
+def add_nodes(request):
+    session = DBSession()
+    sc = get_object_or_404(Scenario, request)
+    new_nodes = []
+    for feature in request.json_body['features']:
+        # assumes point geom
+        coords = feature['geometry']['coordinates']
+        geom = WKTSpatialElement(
+            'POINT(%s %s)' % (coords[0], coords[1])
+            )
+        type_property = feature['properties']['type']
+        weight = feature['properties']['weight']
+        node_type = get_node_type(type_property)
+        node = Node(geom, weight, node_type, sc)
+        new_nodes.append(node)
+    session.add_all(new_nodes)
+    session.flush()
     return Response(str(new_nodes))
 
 

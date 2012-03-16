@@ -75,6 +75,18 @@ class TestMyView(unittest.TestCase):
         self.session.close()
         testing.tearDown()
 
+    def helper_get_nodes(self, scenario_id, node_type=None):
+        " Helper to get nodes of type from scenario "
+        from next.views import show_nodes
+        request = testing.DummyRequest()
+        params = {'id': scenario_id}
+        if (node_type):
+            request.GET = {'type': node_type}
+            
+        request.matchdict = params
+        response = show_nodes(request)
+        return simplejson.loads(response.body)
+
     def test_index(self):
         from next.views import index
         request = testing.DummyRequest()
@@ -158,6 +170,7 @@ class TestMyView(unittest.TestCase):
         self.assertTrue(fac2_coords[0] == -1.0 and fac2_coords[1] == -1.0)
 
 
+
     def test_show_nodes(self):
         from next.views import show_nodes, run_scenario
         sc1 = self.session.query(Scenario).filter(Scenario.name == "Test").first()
@@ -184,9 +197,107 @@ class TestMyView(unittest.TestCase):
         coords = feature['geometry']['coordinates']
         self.assertTrue(([1, 1] == coords) or ([-2, -2] == coords))
         self.assertEqual("population", feature['properties']['type'])
+        
 
+    def test_graph_scenario(self):
+        from next.views import graph_scenario, run_scenario
+        sc1 = self.session.query(Scenario).filter(Scenario.name == "Test").first()
+        request = testing.DummyRequest()
+        params = {'id': sc1.id}
+        request.matchdict = params
+        #create the edges
+        run_scenario(request)
+        response = graph_scenario(request)
+        pairs = simplejson.loads(response.body)
+        #TODO Elaborate this test (add data and check calc)
+        pair = pairs[0]
+        sum_of_density = sum(map(lambda x: x[1], pairs))
+        self.assertTrue(sum_of_density < 1)
+        self.assertTrue(pair[1] < 1)
+        self.assertEqual(1, len(pairs))
+
+
+    def test_graph_scenario_cumul(self):
+        from next.views import graph_scenario_cumul, run_scenario
+        sc1 = self.session.query(Scenario).filter(Scenario.name == "Test").first()
+        request = testing.DummyRequest()
+        params = {'id': sc1.id}
+        request.matchdict = params
+        #create the edges
+        run_scenario(request)
+        response = graph_scenario_cumul(request)
+        pairs = simplejson.loads(response.body)
+        #TODO Elaborate this test (add data and check calc)
+        # import pdb; pdb.set_trace()
+        pair = pairs[0]
+        self.assertTrue(pair[1] < 1)
+        self.assertEqual(1, len(pairs))
+
+    def test_find_pop_with(self):
+        from next.views import find_pop_with, run_scenario
+        sc1 = self.session.query(Scenario).filter(Scenario.name == "Test").first()
+        request = testing.DummyRequest()
+        params = {'id': sc1.id}
+        request.matchdict = params
+        #create the edges
+        run_scenario(request)
+        request.json_body = {'d': 1000} 
+        response = find_pop_with(request)
+        total = simplejson.loads(response.body)
+        self.assertEqual(0, total['total'])
+
+    def test_create_facilities(self):
+        from next.views import create_facilities, run_scenario
+        sc1 = self.session.query(Scenario).filter(Scenario.name == "Test").first()
+        request = testing.DummyRequest()
+        params = {'id': sc1.id}
+        request.matchdict = params
+        #create the edges
+        run_scenario(request)
+
+        request.json_body = {'d': 1000, 'n': 10} 
+        response = create_facilities(request)
+        #ensure that we have two new facility nodes
+        pop_nodes = self.helper_get_nodes(sc1.id, "facility") 
+        self.assertEqual(4, len(pop_nodes['features']))
         
-        
+    def test_add_nodes(self):
+        from next.views import add_nodes
+        sc1 = self.session.query(Scenario).filter(Scenario.name == "Test").first()
+        request = testing.DummyRequest()
+        params = {'id': sc1.id}
+        request.matchdict = params
+
+        nodes = {'features':
+                  [
+                      {
+                      'geometry': {
+                          'coordinates': [10.0, 10.0]
+                          },
+                      'properties': {
+                          'type': 'population',
+                          'weight': 3
+                          }
+                      },
+                      {
+                      'geometry': {
+                          'coordinates': [20.0, 20.0]
+                          },
+                      'properties': {
+                          'type': 'facility',
+                          'weight': 3
+                          }
+                      }
+                 ]
+               }
+                      
+        request.json_body = nodes 
+        response = add_nodes(request)
+        #ensure that we have two new nodes (6 total)
+        nodes = self.helper_get_nodes(sc1.id) 
+        self.assertEqual(6, len(nodes['features']))
+
+
 class TestDatabase(unittest.TestCase):
     def setUp(self):
         self.config = testing.setUp()
