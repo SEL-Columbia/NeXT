@@ -5,7 +5,8 @@ from fabric.api import env, run, cd, settings
 
 DEFAULTS = {
     'home': '/home/modwsgi',
-    'repo': 'NeXT'
+    'repo': 'NeXT',
+    'dbname': 'next'
     }
 
 DEPLOYMENTS = {
@@ -44,7 +45,7 @@ def deploy(deployment):
     pull(deployment)        
     run_in_virtualenv("pip install -r %s" % env.pip_requirements_file)
     with cd(env.src_directory):
-        run("sudo su postgres ./load-sql.sh")
+        run("sudo su postgres ./load-sql.sh %s" % env.dbname)
         run_in_virtualenv("python setup.py install")
     
     run('touch %s' % env.wsgi_file)
