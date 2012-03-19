@@ -14,20 +14,17 @@ def main(global_config, **settings):
 
     config.add_static_view('static', 'next:static')
     config.add_route('index', '/')
-    config.add_route('show-all-scenarios', '/scenarios')
+    config.add_route('scenarios', '/scenarios')
     config.add_route('remove-scenarios', '/scenarios/remove')
 
-    config.add_route('create-scenario', '/scenario/new')
     config.add_route('show-scenario', '/scenarios/{id}')
     config.add_route('nodes', '/scenarios/{id}/nodes')
-    config.add_route('run-scenario', '/scenario/{id}/run')
-    config.add_route('add-new-nodes', '/scenario/{id}/new-nodes'),
-    config.add_route('find-pop-within', '/scenario/{id}/find-pop-within')
+    config.add_route('find-pop-within', '/scenarios/{id}/find-pop-within')
 
-    config.add_route('graph-scenario', '/scenario/{id}/graph-data')
-    config.add_route('graph-scenario-cumul', '/scenario/{id}/graph-data-cumul')
+    config.add_route('graph-scenario', '/scenarios/{id}/graph-data')
+    config.add_route('graph-scenario-cumul', '/scenarios/{id}/graph-data-cumul')
 
-    config.add_route('create-facilities', 'scenario/{id}/create-facilities')
+    config.add_route('create-facilities', 'scenarios/{id}/create-facilities')
 
     config.scan()
     return config.make_wsgi_app()

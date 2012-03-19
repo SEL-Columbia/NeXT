@@ -73,11 +73,11 @@
 
      load_page({'mapDiv': 'scenario-map', 
         'bbox': ${list(scenario.get_bounds().bounds)},
-        'pop_url': '${request.route_url('show-nodes',id=scenario.id,_query=dict([('type','population')]))}',
-        'fac_url': '${request.route_url('show-nodes',id=scenario.id,_query=dict([('type','facility')]))}',
+        'pop_url': '${request.route_url('nodes',id=scenario.id,_query=dict([('type','population')]))}',
+        'fac_url': '${request.route_url('nodes',id=scenario.id,_query=dict([('type','facility')]))}',
         'graph_cumul_url': '${request.route_url('graph-scenario-cumul', id=scenario.id)}',
         ///'graph_density_url': '${request.route_url('graph-scenario', id=scenario.id)}',
-        'new_node_url': '${request.route_url('add-new-nodes', id=scenario.id)}',
+        'new_node_url': '${request.route_url('nodes', id=scenario.id)}',
         'percent_within': '${request.route_url('find-pop-within', id=scenario.id)}',
         'create_facilities': '${request.route_url('create-facilities', id=scenario.id)}',
         'scenario': ${scenario.id}

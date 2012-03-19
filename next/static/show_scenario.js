@@ -178,7 +178,7 @@ var load_page = function  (options) {
         // sync new data with old facility datasets via post
         // call the run url for the scenario
         // route user to new scenario page.
-        var features = _.map(
+        var facilities = _.map(
           new_nodes.features, 
           function(feature) { 
             var geometry = feature.geometry.transform(
@@ -186,17 +186,31 @@ var load_page = function  (options) {
               new OpenLayers.Projection('EPSG:4326')
             );
             
-            return {x: geometry.x, y: geometry.y};            
+            var geoJSON = new OpenLayers.Format.GeoJSON();
+            point = geoJSON.extract.point(geometry);
+            return { 'type': 'Features', 
+                     'geometry': {
+                         'type': 'Point', 
+                         'coordinates': point
+                      }, 
+                     'properties': {
+                          'type': 'facility',
+                          'weight': 1
+                     }
+                   }
+                  
+            // return {x: geometry.x, y: geometry.y};            
           }
         )
 
+        var features = {'features': facilities }
         $.ajax({
           type: 'POST',
           url: options.new_node_url,
           data: JSON.stringify(features),
           contentType: 'application/json; charset=utf-8',
           success: function(data) { 
-            window.location = '/scenario/' + options.scenario + '/run' ;
+            window.location = '/scenarios/' + options.scenario;
           },         
         });
       } else { 
@@ -213,7 +227,7 @@ var load_page = function  (options) {
                                   'n': $('#num_facilities').val()}),
             contentType: 'application/json; charset=utf-8',
             success: function(data) { 
-                window.location = '/scenario/' + options.scenario + '/run';
+                window.location = '/scenarios/' + options.scenario;
             }
         });
     });

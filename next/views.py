@@ -48,7 +48,7 @@ def index(request):
     return {'scenarios': session.query(Scenario).all()}
 
 
-@view_config(route_name='show-all-scenarios')
+@view_config(route_name='scenarios', request_method="GET")
 def show_all(request):
     session = DBSession()
     scs = session.query(Scenario).all()
@@ -104,7 +104,7 @@ def write_tmp_file(post_file, tmp_file):
     open_tmp.close()
     
     
-@view_config(route_name='create-scenario', renderer='create-scenario.mako')
+@view_config(route_name='scenarios', request_method="POST", renderer='create-scenario.mako')
 def create_scenario(request):
     """
     Bulk load the nodes from the population and facility csv's
@@ -184,7 +184,7 @@ def create_scenario(request):
 
 
 
-@view_config(route_name='run-scenario')
+# @view_config(route_name='run-scenario')
 def run_scenario(request):
     """ Create the nearest-neighbor edges """
 
@@ -310,22 +310,6 @@ def create_facilities(request):
         location=request.route_url('show-scenario', id=sc.id))
 
     
-@view_config(route_name='add-new-nodes')
-def add_new_nodes(request):
-    session = DBSession()
-    sc = get_object_or_404(Scenario, request)
-    new_nodes = []
-    facility_type = get_node_type('facility')
-    for new_node in request.json_body:
-        geom = WKTSpatialElement(
-            'POINT(%s %s)' % (new_node['x'], new_node['y'])
-            )
-        node = Node(geom, 1, facility_type, sc)
-        new_nodes.append(node)
-    session.add_all(new_nodes)
-    return Response(str(new_nodes))
-
-
 @view_config(route_name='nodes', request_method='POST')
 def add_nodes(request):
     session = DBSession()
@@ -344,6 +328,7 @@ def add_nodes(request):
         new_nodes.append(node)
     session.add_all(new_nodes)
     session.flush()
+    sc.create_edges()
     return Response(str(new_nodes))
 
 
