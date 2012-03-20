@@ -6,7 +6,7 @@ Data Model
              "id": int,
              "name": string,        // has to be unique
              * "parent_id": int,    // for tracking derivations (forks)
-             * "stage_ids": [int]   // all stages for which scenario_id = id 
+             * "phase": int   // phase 0 for this scenario 
             }
 
     "node": {
@@ -24,19 +24,21 @@ Data Model
                  "to_node_id": int, // ForeignKey
                  "scenario_id": int, // ForeignKey
                  "distance": float,
-                 * "stage_id": int, // ForeignKey
+                 * "phase_id": int, // ForeignKey
                 }
               ]
 
-    * "stage": {
-                 "id": int,          // stage 0 always exists
-                 "scenario_id": int, // ForeignKey
+    * "phase": {
+                 "id": int,                   // phase 0 always exists
+                 "last_modified" : time,      // 
+                 "parent_phase_id" : int,     // ForeignKey
+                 "scenario_id": int,          // ForeignKey
                }
 
     "summary": { 
                   "scenario_id": int, // ForeignKey
-                  "stage_id": int, // ForeignKey
-                  "average_distance_to_facility": float
+                  "phase_id": int, // ForeignKey
+                  "average_distance_to_service_node": float
                   ...
                }
 
@@ -73,9 +75,9 @@ General Guidelines:
 
 1. create-scenario: route='/scenarios', request_method='POST'
    params:
-      pop-csv:  csv file representing nodes of type "population" with columns:
+      pop-csv:  csv file representing nodes of type "demand_node" with columns:
                 lat, long, weight  (indicated by header row)
-      fac-csv:  csv file representing nodes of type "facility" with columns:
+      fac-csv:  csv file representing nodes of type "service_node" with columns:
                 lat, long  (indicated by header row)
 
    returns:  id: integer (media-type=json) OR show-scenario (media-type=html)
@@ -89,8 +91,7 @@ General Guidelines:
 2. show-scenario: route='/scenarios/:id', request_method='GET'
 
    params:
-       [stage_start]:  begin stage number
-       [stage_end]:  end stage number
+       phase=0:  optional end phase number; default = 0
  
    returns:  scenario json representation  (media-type=json) OR 
              html rep (media-type=html)      
@@ -114,35 +115,33 @@ General Guidelines:
    post-condition(s): all scenarios matching list of id's are
    permanently deleted
 
-5. show-nodes(list): route='/scenarios/:id/nodes', request_method='GET'
+5. show-nodes(list): route='/scenarios/:id/phases/:id/nodes', request_method='GET'
 
    params:
-       type:  node type as string (i.e. "population" or "facility")
-       [opt] stage_start:  begin stage number
-       [opt] stage_end:  end stage number
+       type:  node type as string (i.e. "demand_node" or "service_node")
+       cumulative=TRUE:     cumulative, or just this phases's info? default = cumulative.
 
    returns:  list of node geojson representations (media-type=json)
 
-6. show-edges: route='/scenarios/:id', request_method='GET'
+6. show-edges: route='/scenarios/:id/phases/"id/', request_method='GET'
 
    params:
-       [opt] stage_start:  begin stage number
-       [opt] stage_end:  end stage number
+       cumulative=TRUE:     cumulative, or just this phases's info? default = cumulative.
 
    returns:  list of edge json representations (media-type=json)
   
-7. clone-scenario:  route='/scenarios/:id/clone', request_method='GET'
+7. clone-scenario:  route='/scenarios/:id/phases/:id/clone', request_method='GET'
 
    params:
-       [name]:  new name for clone
+       [name]:          new name for clone
 
    returns:  id: integer (media-type=json) OR show-scenario
    (media-type=html)
 
-   post-condition(s):  scenario has been copied (with all stages
-   merged into a new initial stage)
+   post-condition(s):  scenario has been copied (with all phases
+   cumulative into a new initial phase on new scenario)
 
-8. create-node(s):  route='/scenarios/:id/node', request_method='POST'
+8. create-node(s):  route='/scenarios/:id/phases/:id/node', request_method='POST'
    ?? Need to think about this ??
 
    params:
@@ -160,14 +159,15 @@ General Guidelines:
        1. Nodes have been added to the scenario
        2. Nearest Neighbor edges have been created
 
-9. cover-nodes: route='/scenarios/:id/cover', request_method='POST'
+9. cover-nodes: route='/scenarios/:id/phases/:id/cover', request_method='POST'
 
   params:
     method: Name of agglomeration method (i.e. "complete",
     "average"...)
     distance:  Agglomeration cut-off distance
-    num_facilities:  Number of facilities to add
-    split_into_stages:  Whether each new facility should be a new stage
+    num_service_node:  Number of service nodes to add
+    number_of_phases_to_split_to: Number of phases to split new service nodes into; default = 1;
+                                  if number_of_phases_to_split_to > new nodes, front-load 
 
   returns:  HTTP Response code OR show-scenario (media-type=html)
 
