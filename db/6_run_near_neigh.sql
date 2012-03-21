@@ -13,7 +13,7 @@ BEGIN
   DELETE FROM edges WHERE edges.scenario_id=$1;
   INSERT INTO edges 
     (from_node_id, to_node_id, scenario_id, distance)
-    SELECT pop_id, fac_id, $1 scenario_id, distance 
+    SELECT demand_node_id, supply_node_id, $1 scenario_id, distance 
     FROM near_neigh($1);
  RETURN;
  END;

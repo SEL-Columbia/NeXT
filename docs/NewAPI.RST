@@ -36,7 +36,7 @@ Data Model
     "summary": { 
                   "scenario_id": int, // ForeignKey
                   "stage_id": int, // ForeignKey
-                  "average_distance_to_facility": float
+                  "average_distance_to_supply": float
                   ...
                }
 
@@ -73,9 +73,9 @@ General Guidelines:
 
 1. create-scenario: route='/scenarios', request_method='POST'
    params:
-      pop-csv:  csv file representing nodes of type "population" with columns:
+      demand-csv:  csv file representing nodes of type "demand" with columns:
                 lat, long, weight  (indicated by header row)
-      fac-csv:  csv file representing nodes of type "facility" with columns:
+      supply-csv:  csv file representing nodes of type "supply" with columns:
                 lat, long  (indicated by header row)
 
    returns:  id: integer (media-type=json) OR show-scenario (media-type=html)
@@ -117,7 +117,7 @@ General Guidelines:
 5. show-nodes(list): route='/scenarios/:id/nodes', request_method='GET'
 
    params:
-       type:  node type as string (i.e. "population" or "facility")
+       type:  node type as string (i.e. "demand" or "supply")
        [opt] stage_start:  begin stage number
        [opt] stage_end:  end stage number
 
@@ -166,8 +166,9 @@ General Guidelines:
     method: Name of agglomeration method (i.e. "complete",
     "average"...)
     distance:  Agglomeration cut-off distance
-    num_facilities:  Number of facilities to add
-    split_into_stages:  Whether each new facility should be a new stage
+    num_supply_nodes:  Number of supply_nodes to add
+    split_into_stages:  Whether each new supply node should be a new stage
+
 
   returns:  HTTP Response code OR show-scenario (media-type=html)
 

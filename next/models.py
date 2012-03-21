@@ -59,21 +59,21 @@ class Scenario(Base):
         session = DBSession()
         return session.query(Node).filter_by(scenario=self)
 
-    def get_total_population(self):
+    def get_total_demand(self):
         """
         select sum(nodes.weight) from nodes where ...
         """
         session = DBSession()
         total = session.query(func.sum(Node.weight))\
             .filter_by(scenario=self)\
-            .filter_by(node_type=get_node_type('population'))
+            .filter_by(node_type=get_node_type('demand'))
         # Check whether we have results
         if(total.count() > 0):
             return float(total[0][0])
         else:
             return 0.0
 
-    def get_total_population_within(self, d):
+    def get_total_demand_within(self, d):
         """
         """
         session = DBSession()
@@ -81,7 +81,7 @@ class Scenario(Base):
             Edge, Node.id == Edge.from_node_id)\
             .filter(Node.scenario_id == self.id)\
             .filter(Edge.distance <= d)\
-            .filter(Node.node_type == get_node_type('population'))
+            .filter(Node.node_type == get_node_type('demand'))
         #Check whether we have results
         if(total.count() > 0 and (total[0][0] != None)):
             #print total
@@ -91,8 +91,8 @@ class Scenario(Base):
 
 
     def get_percent_within(self, d):
-        total = self.get_total_population()
-        subset = self.get_total_population_within(d)
+        total = self.get_total_demand()
+        subset = self.get_total_demand_within(d)
         return subset / total
 
 
@@ -134,7 +134,7 @@ class Scenario(Base):
 
         return None
 
-    def get_population_vs_distance(self, num_partitions=5):
+    def get_demand_vs_distance(self, num_partitions=5):
         session = DBSession()
         conn = session.connection()
         sql = text(
@@ -149,14 +149,14 @@ class Scenario(Base):
         return rset
 
 
-    def get_partitioned_pop_vs_dist(self, num_partitions=5):
+    def get_partitioned_demand_vs_dist(self, num_partitions=5):
         # This function is only valid when there are edges
         # and the distance between the max/min is > 0
         session = DBSession()
         conn = session.connection()
         sql = text(
         '''
-        select * from pop_over_dist(:sc_id, :num_parts)
+        select * from demand_over_dist(:sc_id, :num_parts)
         ''')
 
         rset = conn.execute(
@@ -166,27 +166,27 @@ class Scenario(Base):
         return rset
         
 
-    def get_pop_nodes_outside_distance(self, distance):
+    def get_demand_nodes_outside_distance(self, distance):
         """
-        Get the population nodes that are further than distance from their associated facility.
+        Get the demand nodes that are further than distance from their associated supply.
         """
         session = DBSession()
-        pop_nodes = session.query(Node).join(
+        demand_nodes = session.query(Node).join(
             Edge, Node.id == Edge.from_node_id)\
             .filter(Node.scenario_id == self.id)\
             .filter(Edge.distance > distance)\
-            .filter(Node.node_type == get_node_type('population'))
+            .filter(Node.node_type == get_node_type('demand'))
 
-        return pop_nodes
+        return demand_nodes
 
 
-    def locate_facilities(self, distance, num_facilities):
+    def locate_supply_nodes(self, distance, num_supply_nodes):
         """
-        locate num_facilities that cover the population within
-        distance from those facilities.
+        locate num_supply_nodes that cover the demand within
+        distance from those supply_nodes.
         """
-        pop_nodes = self.get_pop_nodes_outside_distance(distance).all()
-        pts = get_coords(pop_nodes)
+        demand_nodes = self.get_demand_nodes_outside_distance(distance).all()
+        pts = get_coords(demand_nodes)
         km = distance / 1000.0
         from spatial_utils import cluster_r, util
 
@@ -197,7 +197,7 @@ class Scenario(Base):
         for i in range(0, len(clusters)):
             cluster_nodes.append([])
             for j in range(0, len(clusters[i])):
-                cluster_nodes[i].append(pop_nodes[clusters[i][j]])
+                cluster_nodes[i].append(demand_nodes[clusters[i][j]])
             
         centroids = []
         for cluster in cluster_nodes:
@@ -207,16 +207,16 @@ class Scenario(Base):
             weights = map(lambda x: x.weight, cluster)
             weight = sum(weights)
             geom = WKTSpatialElement('POINT(%s %s)' % (pt[0], pt[1]))
-            node = Node(geom, weight, get_node_type('facility'), self)
+            node = Node(geom, weight, get_node_type('supply'), self)
             centroids.append(node)
 
         centroids.sort(key=lambda x: x.weight, reverse=True)
 
         k_clusts = []
-        if num_facilities > len(centroids):
+        if num_supply_nodes > len(centroids):
             k_clusts = centroids
         else:
-            k_clusts = centroids[0:num_facilities]
+            k_clusts = centroids[0:num_supply_nodes]
 
         return k_clusts
         
@@ -224,7 +224,7 @@ class Scenario(Base):
     def create_edges(self):
         """
         Clear out any existing edges and run nearest neighbor to
-        associate population nodes with their nearest facility.
+        associate demand nodes with their nearest supply.
         """
         session = DBSession()
         conn = session.connection()

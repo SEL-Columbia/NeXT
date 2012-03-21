@@ -1,7 +1,7 @@
 CREATE OR REPLACE FUNCTION density_over_dist(
   scenario_id integer,   
   num_partitions integer)
-  RETURNS TABLE (distance integer, pop double precision)
+  RETURNS TABLE (distance integer, demand double precision)
   AS 
 $$ 
   WITH dists AS 
@@ -20,11 +20,11 @@ $$
         FROM edges e, nodes n
         WHERE n.node_type_id=1 AND
           e.from_node_id=n.id AND
-          e.scenario_id = $1) pop_dist, 
+          e.scenario_id = $1) demand_dist, 
       dists
       WHERE 
-        pop_dist.distance < dists.offset_dist AND
-        pop_dist.distance >= dists.actual_dist
+        demand_dist.distance < dists.offset_dist AND
+        demand_dist.distance >= dists.actual_dist
      ) d
   GROUP BY d.distance
   ORDER BY d.distance

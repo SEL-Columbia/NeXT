@@ -48,7 +48,7 @@ def index(request):
     return {'scenarios': session.query(Scenario).all()}
 
 
-@view_config(route_name='scenarios', request_method="GET")
+@view_config(route_name='scenarios', request_method='GET')
 def show_all(request):
     session = DBSession()
     scs = session.query(Scenario).all()
@@ -103,11 +103,14 @@ def write_tmp_file(post_file, tmp_file):
     copyfileobj(raw_file, open_tmp)
     open_tmp.close()
     
+@view_config(route_name='create-scenario', renderer='create-scenario.mako')
+def show_create_scenario(request): 
+    return {}
     
-@view_config(route_name='scenarios', request_method="POST", renderer='create-scenario.mako')
+@view_config(route_name='scenarios', request_method='POST')
 def create_scenario(request):
     """
-    Bulk load the nodes from the population and facility csv's
+    Bulk load the nodes from the demand and supply csv's
     """
             
     if(request.method=='POST'):
@@ -115,9 +118,9 @@ def create_scenario(request):
         dbapi_conn = session.connection().connection
         sc = None
         try:
-            logger.debug("Start node population")
-            pop_type = get_node_type('population')
-            fac_type = get_node_type('facility')
+            logger.debug("Start node demand")
+            demand_type = get_node_type('demand')
+            supply_type = get_node_type('supply')
     
             name = request.POST['name']
             # make sure that we have a name
@@ -127,43 +130,43 @@ def create_scenario(request):
             sc = Scenario(name)
             session.add(sc)
             session.flush()
-            pop_file = request.POST['pop-csv']
-            fac_file = request.POST['fac-csv']
+            demand_file = request.POST['demand-csv']
+            supply_file = request.POST['supply-csv']
 
-            tmp_pop_file = os.path.join(
+            tmp_demand_file = os.path.join(
                 request.registry.settings['next.temporary_folder'],
-                pop_file.filename
+                demand_file.filename
                 )
 
-            tmp_fac_file = os.path.join(
+            tmp_supply_file = os.path.join(
                 request.registry.settings['next.temporary_folder'],
-                fac_file.filename
+                supply_file.filename
                 )
 
-            write_tmp_file(pop_file, tmp_pop_file)
-            write_tmp_file(fac_file, tmp_fac_file)
+            write_tmp_file(demand_file, tmp_demand_file)
+            write_tmp_file(supply_file, tmp_supply_file)
 
             importer = pg_import.PGImport(dbapi_conn, 'nodes', ('weight', 'node_type_id', 'scenario_id', 'point'))
-            pop_translator = pg_import.CSVToCSV_WKT_Point((0, 1), {0: 1, 1: pop_type.id, 2: sc.id})
-            fac_translator = pg_import.CSVToCSV_WKT_Point((0, 1), {0: 1, 1: fac_type.id, 2: sc.id})
-            pop_stream = StringIO.StringIO()
-            fac_stream = StringIO.StringIO()
-            in_pop_stream = open(tmp_pop_file, 'rU')
-            in_fac_stream = open(tmp_fac_file, 'rU')
+            demand_translator = pg_import.CSVToCSV_WKT_Point((0, 1), {0: 1, 1: demand_type.id, 2: sc.id})
+            supply_translator = pg_import.CSVToCSV_WKT_Point((0, 1), {0: 1, 1: supply_type.id, 2: sc.id})
+            demand_stream = StringIO.StringIO()
+            supply_stream = StringIO.StringIO()
+            in_demand_stream = open(tmp_demand_file, 'rU')
+            in_supply_stream = open(tmp_supply_file, 'rU')
             #TODO:  may want to move srid to configuration at some point
-            pop_translator.translate(in_pop_stream, pop_stream, 4326)
-            fac_translator.translate(in_fac_stream, fac_stream, 4326)
-            pop_stream.seek(0)
-            fac_stream.seek(0)
-            importer.do_import(pop_stream)
-            importer.do_import(fac_stream)
+            demand_translator.translate(in_demand_stream, demand_stream, 4326)
+            supply_translator.translate(in_supply_stream, supply_stream, 4326)
+            demand_stream.seek(0)
+            supply_stream.seek(0)
+            importer.do_import(demand_stream)
+            importer.do_import(supply_stream)
             
-            #do we need to close the out_pop_stream/fac_stream?
+            #do we need to close the out_demand_stream/supply_stream?
             #TODO:  Figure out how to participate in the 
             #SQL Alchemy transaction...otherwise, this is 
             #difficult to test
             # dbapi_conn.commit()
-            logger.debug("End node population")
+            logger.debug("End node demand")
         except Exception as error:
             # dbapi_conn.rollback()
             raise(error)    
@@ -211,7 +214,7 @@ def show_nodes(request):
     """ 
     Returns nodes as geojson
     type parameter used as a filter
-    If type=='population', then add nearest-neighbor distance to output
+    If type=='demand', then add nearest-neighbor distance to output
     """
 
     session = DBSession()
@@ -219,8 +222,8 @@ def show_nodes(request):
     nodes = []
     if (request.GET.has_key("type")):
         request_node_type = request.GET["type"]
-        if(request_node_type == "population"):
-            return show_population_json(scenario)
+        if(request_node_type == "demand"):
+            return show_demand_json(scenario)
         else: 
             nodes = scenario.get_nodes().\
                 filter_by(node_type=get_node_type(request_node_type))
@@ -230,7 +233,7 @@ def show_nodes(request):
     return to_geojson_feature_collection(nodes)
 
 
-def show_population_json(scenario):
+def show_demand_json(scenario):
     session = DBSession()
     conn = session.connection()
     sql = text('''
@@ -243,7 +246,7 @@ def show_population_json(scenario):
     where nodes.scenario_id = :sc_id and
     nodes.id = edges.from_node_id and
     nodes.node_type_id = nodetypes.id and
-    nodetypes.name='population'
+    nodetypes.name='demand'
     ''')
     rset = conn.execute(sql, sc_id=scenario.id).fetchall()
     feats = [
@@ -264,14 +267,14 @@ def show_population_json(scenario):
 @view_config(route_name='graph-scenario')
 def graph_scenario(request):
     sc = get_object_or_404(Scenario, request)
-    return json_response(map(list, sc.get_population_vs_distance(num_partitions=20)))
+    return json_response(map(list, sc.get_demand_vs_distance(num_partitions=20)))
 
 
 @view_config(route_name='graph-scenario-cumul')
 def graph_scenario_cumul(request):
     sc = get_object_or_404(Scenario, request)
     return json_response(map(list, 
-        sc.get_partitioned_pop_vs_dist(num_partitions=100)))
+        sc.get_partitioned_demand_vs_dist(num_partitions=100)))
 
 
 @view_config(route_name='show-scenario', renderer='show-scenario.mako')
@@ -281,8 +284,8 @@ def show_scenario(request):
     return {'scenario': get_object_or_404(Scenario, request)}
 
 
-@view_config(route_name='find-pop-within')
-def find_pop_with(request):
+@view_config(route_name='find-demand-within')
+def find_demand_with(request):
     sc = get_object_or_404(Scenario, request)
     distance = request.json_body.get('d', 1000)
     return json_response(
@@ -290,17 +293,17 @@ def find_pop_with(request):
         )
 
 
-@view_config(route_name='create-facilities')
-def create_facilities(request):
+@view_config(route_name='create-supply-nodes')
+def create_supply_nodes(request):
     """
-    Create new facilities based on distance and re-create the nearest neighbor edges.  Display the new output
+    Create new supply based on distance and re-create the nearest neighbor edges.  Display the new output
     """
     session = DBSession()
     sc = get_object_or_404(Scenario, request)
     distance = float(request.json_body.get('d', 1000))
-    num_facilities = int(request.json_body.get('n', 1))
+    num_supply_nodes = int(request.json_body.get('n', 1))
 
-    centroids = sc.locate_facilities(distance, num_facilities)
+    centroids = sc.locate_supply_nodes(distance, num_supply_nodes)
     session.add_all(centroids)
 
     # need to flush so that create_edges knows about new nodes

@@ -15,16 +15,17 @@ def main(global_config, **settings):
     config.add_static_view('static', 'next:static')
     config.add_route('index', '/')
     config.add_route('scenarios', '/scenarios')
+    config.add_route('create-scenario', '/scenarios/create')
     config.add_route('remove-scenarios', '/scenarios/remove')
 
     config.add_route('show-scenario', '/scenarios/{id}')
     config.add_route('nodes', '/scenarios/{id}/nodes')
-    config.add_route('find-pop-within', '/scenarios/{id}/find-pop-within')
+    config.add_route('find-demand-within', '/scenarios/{id}/find-demand-within')
 
     config.add_route('graph-scenario', '/scenarios/{id}/graph-data')
     config.add_route('graph-scenario-cumul', '/scenarios/{id}/graph-data-cumul')
 
-    config.add_route('create-facilities', 'scenarios/{id}/create-facilities')
+    config.add_route('create-supply-nodes', 'scenarios/{id}/create-supply-nodes')
 
     config.scan()
     return config.make_wsgi_app()

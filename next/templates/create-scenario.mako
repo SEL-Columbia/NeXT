@@ -8,7 +8,7 @@
 <form 
    method="POST" 
    enctype="multipart/form-data"
-   action="${request.route_url('create-scenario')}">
+   action="${request.route_url('scenarios')}">
 
   <fieldset>
     <label>Scenario name</label>
@@ -17,12 +17,12 @@
 
   <fieldset>
     <label>Population CSV file</label>
-    <input type="file" name="pop-csv" value="" />  
+    <input type="file" name="demand-csv" value="" />  
   </fieldset>
 
   <fieldset>
     <label>Facility CSV file </label>
-    <input type="file" name="fac-csv" value="" />
+    <input type="file" name="supply-csv" value="" />
   </fieldset>
   
   <input 

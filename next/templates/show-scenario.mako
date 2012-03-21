@@ -73,13 +73,13 @@
 
      load_page({'mapDiv': 'scenario-map', 
         'bbox': ${list(scenario.get_bounds().bounds)},
-        'pop_url': '${request.route_url('nodes',id=scenario.id,_query=dict([('type','population')]))}',
-        'fac_url': '${request.route_url('nodes',id=scenario.id,_query=dict([('type','facility')]))}',
+        'demand_url': '${request.route_url('nodes',id=scenario.id,_query=dict([('type','demand')]))}',
+        'supply_url': '${request.route_url('nodes',id=scenario.id,_query=dict([('type','supply')]))}',
         'graph_cumul_url': '${request.route_url('graph-scenario-cumul', id=scenario.id)}',
         ///'graph_density_url': '${request.route_url('graph-scenario', id=scenario.id)}',
         'new_node_url': '${request.route_url('nodes', id=scenario.id)}',
-        'percent_within': '${request.route_url('find-pop-within', id=scenario.id)}',
-        'create_facilities': '${request.route_url('create-facilities', id=scenario.id)}',
+        'percent_within': '${request.route_url('find-demand-within', id=scenario.id)}',
+        'create_supply_nodes': '${request.route_url('create-supply-nodes', id=scenario.id)}',
         'scenario': ${scenario.id}
       });
     });
@@ -109,26 +109,26 @@
         <form>
           <div class="row">
           <div class="span3">
-  	  <label for="facility_distance">Distance</label>
+  	  <label for="supply_distance">Distance</label>
           </div>
           <div class="span2">
-  	  <input type="text" name="facility_distance" id="facility_distance" value="1000" maxlength="10" style="width:60px"/>
+  	  <input type="text" name="supply_distance" id="supply_distance" value="1000" maxlength="10" style="width:60px"/>
           </div>
           <div class="span3">
-  	  <label for="num_facilities">Number of Facilities</label>
+  	  <label for="num_supply_nodes">Number of Facilities</label>
           </div>
           <div class="span2">
-  	  <input type="text" name="num_facilities" id="num_facilities" value="1" maxlength="5" style="width:40px"/>
+  	  <input type="text" name="num_supply_nodes" id="num_supply_nodes" value="1" maxlength="5" style="width:40px"/>
           </div>
           <div class="span3">
-          <a href="#" class="btn" id="auto-add-facilities">Add</a> 
+          <a href="#" class="btn" id="auto-add-supply-nodes">Add</a> 
           </div>
           </div>
          </form>
       </div>
       <div class="tab-pane" id="manual">
       <!-- <div class="span7"> -->
-        <a href="#" class="btn" id="add-facility">Add</a>
+        <a href="#" class="btn" id="add-supply-node">Add</a>
         <a class="btn" id="stop-editing" href="#" style="display:none">Finish</a>
         <a id="run-scenario" class="btn disabled" href="#">Re-run scenario</a>
         <!--

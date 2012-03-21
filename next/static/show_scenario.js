@@ -88,34 +88,34 @@ var load_page = function  (options) {
     
     style.addRules([ruleLow, ruleMiddle1, ruleMiddle2, ruleHigh]);
     
-    var nodes = new OpenLayers.Layer.Vector('nodes', {
+    var demand_nodes = new OpenLayers.Layer.Vector('demand-nodes', {
       strategies: [new OpenLayers.Strategy.Fixed()],
       styleMap:  style,
       protocol: new OpenLayers.Protocol.HTTP({
-        url: options.pop_url,
+        url: options.demand_url,
         format: new OpenLayers.Format.GeoJSON()
         
       })
     });
 
-    var fac_style = new OpenLayers.Style({
+    var supply_style = new OpenLayers.Style({
       pointRadius: 6,
       fillColor: '#5e0f56',
     });
 
-    var fac_nodes = new OpenLayers.Layer.Vector('pop-nodes', { 
+    var supply_nodes = new OpenLayers.Layer.Vector('supply-nodes', { 
       strategies: [new OpenLayers.Strategy.Fixed()],
-      styleMap: fac_style,
+      styleMap: supply_style,
       protocol: new OpenLayers.Protocol.HTTP({
-        url: options.fac_url,
+        url: options.supply_url,
         format: new OpenLayers.Format.GeoJSON()
       })
     });
     
     map.addLayer(gsat);
     map.addLayer(gphy);
-    map.addLayer(nodes);
-    map.addLayer(fac_nodes);
+    map.addLayer(demand_nodes);
+    map.addLayer(supply_nodes);
 
 
     var bounds = new OpenLayers.Bounds.fromArray(options.bbox);
@@ -150,9 +150,9 @@ var load_page = function  (options) {
     */
 
     var stop = $('#stop-editing');
-    var edit = $('#add-facility');
+    var edit = $('#add-supply-node');
     var run  = $('#run-scenario');
-    var auto_add  = $('#auto-add-facilities');
+    var auto_add  = $('#auto-add-supply-nodes');
 
     edit.click(function() {
       edit_control.activate();
@@ -194,7 +194,7 @@ var load_page = function  (options) {
                          'coordinates': point
                       }, 
                      'properties': {
-                          'type': 'facility',
+                          'type': 'supply',
                           'weight': 1
                      }
                    }
@@ -222,9 +222,9 @@ var load_page = function  (options) {
     auto_add.click(function() { 
         $.ajax({
             type: 'POST',
-            url: options.create_facilities,
-            data: JSON.stringify({'d': $('#facility_distance').val(),
-                                  'n': $('#num_facilities').val()}),
+            url: options.create_supply_nodes,
+            data: JSON.stringify({'d': $('#supply_distance').val(),
+                                  'n': $('#num_supply_nodes').val()}),
             contentType: 'application/json; charset=utf-8',
             success: function(data) { 
                 window.location = '/scenarios/' + options.scenario;

@@ -3,15 +3,15 @@ Releases
 
 **0.2a-407c53e [2011-09-29]**
 
-Fixed BUG in cumulative population SQL that was causing browser crash.
+Fixed BUG in cumulative demand SQL that was causing browser crash.
 
 **0.2-ac8a75b [2011-09-29]**
 
 Release that includes all originally spec'd functionality.
 Added:
 
-- The ability to add a facility and recalculate NN's
-- Display of the cumulative population within X meters
+- The ability to add a supply and recalculate NN's
+- Display of the cumulative demand within X meters
 - Calculator to determine percent within X meters
 - Minor display fixes
 
@@ -19,10 +19,10 @@ Added:
 
 Initial release, demo'd to Vijay Modi and Matt Berg on 2011-09-21.  
 
-- Import of Facilities/Population csv files
-- Calculation of nearest facility per population point
-- Rendering of facilities, population points on google maps
-- Display of population distance to facility graph
+- Import of Supply/Demand csv files
+- Calculation of nearest supply per demand node 
+- Rendering of supply, demand nodes on google maps
+- Display of demand distance to supply graph
 
 
 Installation
@@ -81,7 +81,7 @@ The following applications/libraries are required by NeXT
   
   ./drop-and-create.sh
 
-8. Populate 'next' node_types with population and facility types
+8. Populate 'next' node_types with demand and supply types
 
 ::
 
@@ -124,8 +124,8 @@ The following are the initial envisioned use cases for the NeXT spatial analysis
 
 2. Upload 2 (csv?) files:
 
-  - Facilities (x, y)
-  - Population (x, y, count)
+  - Supply (Facilities x, y, weight)
+  - Demand (Population x, y, weight)
 
 3. Assign a name to the scenario and save it.
 
@@ -135,11 +135,11 @@ The following are the initial envisioned use cases for the NeXT spatial analysis
 
 1. From the index view, select the scenario to view (brings the user to the show-scenario view).
 
-2. The show-scenario view displays the map of the Facilities and Population along with the "Households within Distance to Facility" graph.
+2. The show-scenario view displays the map of the Supply and Demand along with the "Demand within Distance to Facility" graph.
 
 **Add Facility [Future]**
 
-1. From the show-scenario view, user adds a facility to the map via mouse-click. 
+1. From the show-scenario view, user adds a supply node to the map via mouse-click. 
 
 2. The scenario is re-run and the view is refreshed with an updated map and graph.
 

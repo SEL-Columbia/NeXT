@@ -16,43 +16,43 @@ def _initTestingDB():
 
 
 def _initTestData(session):
-    # Initialize Scenario with 2 pop nodes and 2 facilities
+    # Initialize Scenario with 2 demand nodes and 2 supply_nodes
     # Assumes Reference Data (i.e. NodeTypes) are loaded
     
     scenario = Scenario("Test")
     session.add(scenario)
     # session.flush()
 
-    fac1 = Node(
+    supply1 = Node(
                WKTSpatialElement('POINT (0 0)'),
                1,
-               get_node_type('facility'), 
+               get_node_type('supply'), 
                scenario
            )
 
-    fac2 = Node(
+    supply2 = Node(
                WKTSpatialElement('POINT (-1 -1)'),
                1,
-               get_node_type('facility'), 
+               get_node_type('supply'), 
                scenario
            )
 
     hh1  = Node(
                WKTSpatialElement('POINT (1 1)'),
                1,
-               get_node_type('population'), 
+               get_node_type('demand'), 
                scenario
            )
 
     hh2  = Node(
                WKTSpatialElement('POINT (-2 -2)'),
                1,
-               get_node_type('population'), 
+               get_node_type('demand'), 
                scenario
            )
 
-    session.add(fac1)
-    session.add(fac2)
+    session.add(supply1)
+    session.add(supply2)
     session.add(hh1)
     session.add(hh2)
     session.flush()
@@ -114,22 +114,22 @@ class TestMyView(unittest.TestCase):
         import cgi
         dbapi_conn = self.session.connection().connection
 
-        fac_csv = '''0.0,0.0'''
-        pop_csv = '''
+        supply_csv = '''0.0,0.0'''
+        demand_csv = '''
         1.0,1.0
         -1.0,-1.0'''
 
-        fac_strm = StringIO.StringIO(fac_csv)
-        pop_strm = StringIO.StringIO(pop_csv)
-        fac_fs = cgi.FieldStorage()
-        pop_fs = cgi.FieldStorage()
-        fac_fs.filename = 'fac.csv'
-        fac_fs.file = fac_strm
-        pop_fs.filename = 'pop.csv'
-        pop_fs.file = pop_strm
+        supply_strm = StringIO.StringIO(supply_csv)
+        demand_strm = StringIO.StringIO(demand_csv)
+        supply_fs = cgi.FieldStorage()
+        demand_fs = cgi.FieldStorage()
+        supply_fs.filename = 'supply.csv'
+        supply_fs.file = supply_strm
+        demand_fs.filename = 'demand.csv'
+        demand_fs.file = demand_strm
 
 
-        post_vars = {'name': "Test2", 'pop-csv': pop_fs, 'fac-csv': fac_fs}
+        post_vars = {'name': "Test2", 'demand-csv': demand_fs, 'supply-csv': supply_fs}
         request = testing.DummyRequest(post=post_vars)
         request.registry = self.config.registry
         # set the temp folder
@@ -152,22 +152,22 @@ class TestMyView(unittest.TestCase):
         request = testing.DummyRequest()
         request.matchdict = params
         response = run_scenario(request)
-        # ensure that hh's are assoc'd with correct fac's
+        # ensure that hh's are assoc'd with correct supply's
         hh1 = self.session.query(Node).filter(Node.point.x == 1.0).first()
         hh2 = self.session.query(Node).filter(Node.point.x == -2.0).first()
 
-        fac1 = self.session.query(Node).\
+        supply1 = self.session.query(Node).\
           filter(Edge.to_node_id == Node.id).\
           filter(Edge.from_node_id == hh1.id).first()
        
-        fac2 = self.session.query(Node).\
+        supply2 = self.session.query(Node).\
           filter(Edge.to_node_id == Node.id).\
           filter(Edge.from_node_id == hh2.id).first()
         
-        fac1_coords = fac1.point.coords(self.session)
-        fac2_coords = fac2.point.coords(self.session)
-        self.assertTrue(fac1_coords[0] == 0.0 and fac1_coords[1] == 0.0)
-        self.assertTrue(fac2_coords[0] == -1.0 and fac2_coords[1] == -1.0)
+        supply1_coords = supply1.point.coords(self.session)
+        supply2_coords = supply2.point.coords(self.session)
+        self.assertTrue(supply1_coords[0] == 0.0 and supply1_coords[1] == 0.0)
+        self.assertTrue(supply2_coords[0] == -1.0 and supply2_coords[1] == -1.0)
 
 
 
@@ -182,11 +182,11 @@ class TestMyView(unittest.TestCase):
         feature_coll = simplejson.loads(response.body)
         features = feature_coll['features']
         self.assertEqual(4, len(features))
-        #test getting the population nodes
+        #test getting the demand nodes
         #need to run_scenario first to generate edges
         response = run_scenario(request)
 
-        get_params = {'type': "population"}
+        get_params = {'type': "demand"}
         request = testing.DummyRequest(params=get_params)
         request.matchdict = params
         response = show_nodes(request)
@@ -196,7 +196,7 @@ class TestMyView(unittest.TestCase):
         feature = features[0]
         coords = feature['geometry']['coordinates']
         self.assertTrue(([1, 1] == coords) or ([-2, -2] == coords))
-        self.assertEqual("population", feature['properties']['type'])
+        self.assertEqual("demand", feature['properties']['type'])
         
 
     def test_graph_scenario(self):
@@ -233,8 +233,8 @@ class TestMyView(unittest.TestCase):
         self.assertTrue(pair[1] < 1)
         self.assertEqual(1, len(pairs))
 
-    def test_find_pop_with(self):
-        from next.views import find_pop_with, run_scenario
+    def test_find_demand_with(self):
+        from next.views import find_demand_with, run_scenario
         sc1 = self.session.query(Scenario).filter(Scenario.name == "Test").first()
         request = testing.DummyRequest()
         params = {'id': sc1.id}
@@ -242,12 +242,12 @@ class TestMyView(unittest.TestCase):
         #create the edges
         run_scenario(request)
         request.json_body = {'d': 1000} 
-        response = find_pop_with(request)
+        response = find_demand_with(request)
         total = simplejson.loads(response.body)
         self.assertEqual(0, total['total'])
 
-    def test_create_facilities(self):
-        from next.views import create_facilities, run_scenario
+    def test_create_supply_nodes(self):
+        from next.views import create_supply_nodes, run_scenario
         sc1 = self.session.query(Scenario).filter(Scenario.name == "Test").first()
         request = testing.DummyRequest()
         params = {'id': sc1.id}
@@ -256,10 +256,10 @@ class TestMyView(unittest.TestCase):
         run_scenario(request)
 
         request.json_body = {'d': 1000, 'n': 10} 
-        response = create_facilities(request)
-        #ensure that we have two new facility nodes
-        pop_nodes = self.helper_get_nodes(sc1.id, "facility") 
-        self.assertEqual(4, len(pop_nodes['features']))
+        response = create_supply_nodes(request)
+        #ensure that we have two new supply nodes
+        demand_nodes = self.helper_get_nodes(sc1.id, "supply") 
+        self.assertEqual(4, len(demand_nodes['features']))
         
     def test_add_nodes(self):
         from next.views import add_nodes
@@ -275,7 +275,7 @@ class TestMyView(unittest.TestCase):
                           'coordinates': [10.0, 10.0]
                           },
                       'properties': {
-                          'type': 'population',
+                          'type': 'demand',
                           'weight': 3
                           }
                       },
@@ -284,7 +284,7 @@ class TestMyView(unittest.TestCase):
                           'coordinates': [20.0, 20.0]
                           },
                       'properties': {
-                          'type': 'facility',
+                          'type': 'supply',
                           'weight': 3
                           }
                       }
@@ -314,7 +314,7 @@ class TestDatabase(unittest.TestCase):
 
     def _get_node_type(self):
         from next.models import NodeType
-        return NodeType(u'population')
+        return NodeType(u'demand')
 
     def _get_node(self):
         from next.models import Node
@@ -335,7 +335,7 @@ class TestDatabase(unittest.TestCase):
 
     def test_node_type(self):
         from next.models import NodeType
-        _type = NodeType(u'population')
+        _type = NodeType(u'demand')
         self.session.add(_type)
 
     def test_node(self):

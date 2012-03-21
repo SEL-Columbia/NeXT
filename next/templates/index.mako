@@ -5,7 +5,7 @@
 
 <%def name="body()">
 
-<a class="btn" href="${request.route_url('scenarios')}">Create new scenario</a>
+<a class="btn" href="${request.route_url('create-scenario')}">Create new scenario</a>
 <h3>Existing Scenarios</h3>
 
 <div class="row">
