@@ -1,10 +1,3 @@
-"""
-Models for Next project.
-
-Ivan Willig, Chris Natali
-
-"""
-
 import logging
 from geoalchemy import Column
 from geoalchemy import GeometryColumn
@@ -16,102 +9,46 @@ from sqlalchemy import Integer
 from sqlalchemy import Unicode
 from sqlalchemy import ForeignKey
 
-from sqlalchemy.ext.declarative import declarative_base
-
 from sqlalchemy.orm import scoped_session
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relation
 from sqlalchemy.sql import text
 from sqlalchemy.sql import func
 from zope.sqlalchemy import ZopeTransactionExtension
 import shapely
+from next import Base
+from next import DBSession 
+
 
 logger = logging.getLogger(__name__)
-DBSession = scoped_session(sessionmaker(extension=ZopeTransactionExtension()))
-Base = declarative_base()
 
-
-def get_node_type(type):
+def get_node_type(node_type):
     session = DBSession()
-    return session.query(NodeType).filter_by(name=unicode(type)).first()
+    return session.query(NodeType).filter_by(name=unicode(node_type)).first()
+
+class NodeType(Base):
+
+    __tablename__ = 'nodetypes'
+    __table_args__ = {'autoload': True}
+
+    def __init__(self, name):
+        self.name = name
+
 
 
 class Scenario(Base):
-    """
-    """
 
     __tablename__ = 'scenarios'
+    __table_args__ = {'autoload': True}
 
-    id = Column(Integer, primary_key=True)
-    name = Column(Unicode)
+    phases = relationship("Phase")
 
     def __init__(self, name):
         self.name = name
 
     def __repr__(self):
         return '#<Scenario %s>' % self.name
-
-    def get_edges(self):
-        session = DBSession()
-        return session.query(Edge).filter_by(scenario=self)
-
-    def get_nodes(self):
-        session = DBSession()
-        return session.query(Node).filter_by(scenario=self)
-
-    def get_total_demand(self):
-        """
-        select sum(nodes.weight) from nodes where ...
-        """
-        session = DBSession()
-        total = session.query(func.sum(Node.weight))\
-            .filter_by(scenario=self)\
-            .filter_by(node_type=get_node_type('demand'))
-        # Check whether we have results
-        if(total.count() > 0):
-            return float(total[0][0])
-        else:
-            return 0.0
-
-    def get_total_demand_within(self, d):
-        """
-        """
-        session = DBSession()
-        total = session.query(func.sum(Node.weight)).join(
-            Edge, Node.id == Edge.from_node_id)\
-            .filter(Node.scenario_id == self.id)\
-            .filter(Edge.distance <= d)\
-            .filter(Node.node_type == get_node_type('demand'))
-        #Check whether we have results
-        if(total.count() > 0 and (total[0][0] != None)):
-            #print total
-            return float(total[0][0])
-        else:
-            return 0.0
-
-
-    def get_percent_within(self, d):
-        total = self.get_total_demand()
-        subset = self.get_total_demand_within(d)
-        return subset / total
-
-
-    def to_geojson(self):
-        bounds = self.get_bounds(srid=4326)
-        coords = []
-        if (bounds):
-            if (isinstance(bounds, shapely.geometry.point.Point)):
-                coords = bounds.bounds
-            else:
-                coords = list(bounds.exterior.coords)
-
-        return {'type': 'Feature',
-                'properties': {'id': self.id, 'name': self.name},
-                'geometry':
-                {'type': 'LineString',
-                 'coordinates': coords
-                 }}
-
 
     def get_bounds(self, srid=900913):
         """
@@ -133,18 +70,145 @@ class Scenario(Base):
                 return loads(rset1)
 
         return None
+    
+
+    def to_geojson(self):
+        bounds = self.get_bounds(srid=4326)
+        coords = []
+        if (bounds):
+            if (isinstance(bounds, shapely.geometry.point.Point)):
+                coords = bounds.bounds
+            else:
+                coords = list(bounds.exterior.coords)
+
+        return  {'type': 'Feature',
+                'properties': {'id': self.id, 'name': self.name},
+                'geometry':
+                {'type': 'LineString',
+                 'coordinates': coords
+                 }}
+
+    def get_phases_geojson(self):
+        phase_dict = {}
+        root = None
+        for phase in self.phases:
+            phase_dict[phase.id] = phase.to_geojson()
+
+        for phase in self.phases:
+            parent = None
+            if(phase_dict.has_key(phase.parent_id)):
+                parent = phase_dict[phase.parent_id]
+            if(parent):
+                child = phase_dict[phase.id]
+                parent['properties']['children'].append(child)
+            else:
+                #we found the root
+                root = phase_dict[phase.id]
+
+        return root
+
+
+class Phase(Base):
+
+    __tablename__ = 'phases'
+    __table_args__ = {'autoload': True}
+
+    id = Column(Integer, primary_key=True)
+    scenario_id = Column(Integer, ForeignKey("scenarios.id"), primary_key=True) 
+    scenario = relationship("Scenario")
+    parent = relationship("Phase", remote_side=[id, scenario_id])
+
+    """
+    ancestors = relationship("Phase", 
+        secondary = "phase_ancestors",
+        primaryjoin = "(Phase.scenario_id == PhaseAncestor.scenario_id) &\
+                       (Phase.id == PhaseAncestor.phase_id)",
+        secondaryjoin = "(Phase.scenario_id == PhaseAncestor.scenario_id) &\
+                         (Phase.id == PhaseAncestor.phase_id)")
+    """
+
+
+    def __init__(self, scenario, parent=None, name=None):
+        self.scenario = scenario
+        self.parent = parent
+        self.name = name
+
+
+        
+
+    def get_bounds(self, srid=900913):
+        """
+        Method to find the bound box for a scenario.
+        TODO, remove the hard coded sql text
+        """
+        from shapely.wkt import loads
+        session = DBSession()
+        conn = session.connection()
+        sql = text(
+            '''select st_astext(
+               st_transform(st_setsrid(st_extent(point), 4326), :srid))
+               from nodes, phase_ancestors where 
+               phase_ancestors.scenario_id = :sc_id and
+               phase_ancestors.phase_id = :phase_id and
+               nodes.phase_id = phase_ancestors.ancestor_phase_id and
+               nodes.scenario_id = phase_ancestors.scenario_id''')
+        #TODO:  Handle case where no nodes in scenario
+        rset = conn.execute(sql, srid=srid, sc_id=self.scenario_id, phase_id=self.id)
+        if (rset.rowcount > 0):
+            rset1 = rset.fetchone()[0]
+            if(rset1):
+                return loads(rset1)
+
+        return None
+    
+
+    def to_geojson(self):
+        bounds = self.get_bounds(srid=4326)
+        coords = []
+        if (bounds):
+            if (isinstance(bounds, shapely.geometry.point.Point)):
+                coords = bounds.bounds
+            else:
+                coords = list(bounds.exterior.coords)
+
+        return {'type': 'Feature',
+                'properties': {'id': self.id, 'name': self.name, 'children': []},
+                'geometry':
+                {'type': 'LineString',
+                 'coordinates': coords
+                 }}
+
+
+    def create_edges(self):
+        """
+        Clear out any existing edges and run nearest neighbor to
+        associate demand nodes with their nearest supply.
+        """
+        session = DBSession()
+        conn = session.connection()
+        sql = text(
+        '''
+        select run_near_neigh(:sc_id, :phase_id);
+        ''')
+
+        rset = conn.execute(
+            sql,
+            sc_id=self.scenario_id,
+            phase_id=self.id)
+
 
     def get_demand_vs_distance(self, num_partitions=5):
         session = DBSession()
         conn = session.connection()
         sql = text(
         '''
-        select * from density_over_dist(:sc_id, :num_parts)
+        select * from density_over_dist(:sc_id, :phase_id, :num_parts)
         ''')
 
         rset = conn.execute(
                 sql, 
-                sc_id=self.id,
+                sc_id=self.scenario_id,
+                phase_id=self.id,
                 num_parts=num_partitions)
         return rset
 
@@ -156,12 +220,13 @@ class Scenario(Base):
         conn = session.connection()
         sql = text(
         '''
-        select * from demand_over_dist(:sc_id, :num_parts)
+        select * from demand_over_dist(:sc_id, :phase_id, :num_parts)
         ''')
 
         rset = conn.execute(
             sql,
-            sc_id=self.id,
+            sc_id=self.scenario_id,
+            phase_id=self.id,
             num_parts=num_partitions)
         return rset
         
@@ -170,23 +235,71 @@ class Scenario(Base):
         """
         Get the demand nodes that are further than distance from their associated supply.
         """
+
+        qu = get_cumulative_nodes(self.scenario_id, self.id, node_type='demand')
+        qu = qu.join(Edge, Node.id == Edge.from_node_id)\
+            .filter(Edge.distance > distance)
+
+        return qu
+
+
+    def get_total_demand(self):
+        """
+        select sum(nodes.weight) from nodes where ...
+        """
+
+        total = get_cumulative_nodes(self.scenario_id, self.id, cls_or_fun=func.sum(Node.weight), node_type='demand')
+        # Check whether we have results
+        if(total.count() > 0):
+            return float(total[0][0])
+        else:
+            return 0.0
+
+
+    def get_total_demand_within(self, distance):
+        """
+        """
+        q = get_cumulative_nodes(self.scenario_id, self.id, cls_or_fun=func.sum(Node.weight), node_type='demand')
+        total = q.join(Edge, Node.id == Edge.from_node_id)\
+                .filter(Edge.distance <= distance)
+
+        #Check whether we have results
+        if(total.count() > 0 and (total[0][0] != None)):
+            #print total
+            return float(total[0][0])
+        else:
+            return 0.0
+
+
+    def get_percent_within(self, distance):
+        total = self.get_total_demand()
+        subset = self.get_total_demand_within(distance)
+        return subset / total
+    
+
+    def create_nodes(self, points, type_string):
+        """
+        Create a list of nodes from the list of points
+        """
+        #TODO:  Take weight from points?
         session = DBSession()
-        demand_nodes = session.query(Node).join(
-            Edge, Node.id == Edge.from_node_id)\
-            .filter(Node.scenario_id == self.id)\
-            .filter(Edge.distance > distance)\
-            .filter(Node.node_type == get_node_type('demand'))
+        node_type = get_node_type(type_string)
+        new_nodes = []
+        for pt in points:
+            geom = WKTSpatialElement('POINT(%s %s)' % (pt[0], pt[1]))
+            node = Node(geom, 1, node_type, self)
+            new_nodes.append(node)
 
-        return demand_nodes
-
+        session.add_all(new_nodes)
+        
 
     def locate_supply_nodes(self, distance, num_supply_nodes):
         """
         locate num_supply_nodes that cover the demand within
         distance from those supply_nodes.
         """
-        demand_nodes = self.get_demand_nodes_outside_distance(distance).all()
-        pts = get_coords(demand_nodes)
+        nodes = self.get_demand_nodes_outside_distance(distance).all()
+        pts = get_coords(nodes)
         km = distance / 1000.0
         from spatial_utils import cluster_r, util
 
@@ -197,7 +310,7 @@ class Scenario(Base):
         for i in range(0, len(clusters)):
             cluster_nodes.append([])
             for j in range(0, len(clusters[i])):
-                cluster_nodes[i].append(demand_nodes[clusters[i][j]])
+                cluster_nodes[i].append(nodes[clusters[i][j]])
             
         centroids = []
         for cluster in cluster_nodes:
@@ -219,90 +332,39 @@ class Scenario(Base):
             k_clusts = centroids[0:num_supply_nodes]
 
         return k_clusts
-        
 
-    def create_edges(self):
-        """
-        Clear out any existing edges and run nearest neighbor to
-        associate demand nodes with their nearest supply.
-        """
-        session = DBSession()
-        conn = session.connection()
-        sql = text(
-        '''
-        select run_near_neigh(:sc_id);
-        ''')
 
-        rset = conn.execute(
-            sql,
-            sc_id=self.id)
-        
-    
-    def create_nodes(self, points, type_string):
-        """
-        Create a list of nodes from the list of points
-        """
-        session = DBSession()
-        node_type = get_node_type(type_string)
-        new_nodes = []
-        for pt in points:
-            geom = WKTSpatialElement('POINT(%s %s)' % (pt[0], pt[1]))
-            node = Node(geom, 1, node_type, self)
-            new_nodes.append(node)
+class PhaseAncestor(Base):
 
-        session.add_all(new_nodes)
-                                     
-    
-class NodeType(Base):
-    """
-    A NodeType
-    """
-
-    __tablename__ = 'nodetypes'
-
-    id = Column(Integer, primary_key=True)
-    name = Column(Unicode)
-
-    def __init__(self, name):
-        self.name = name
-
-    def __repr__(self):
-        return '#<NodeType %s>' % self.name
+    __tablename__ = 'phase_ancestors'
+    __table_args__ = ({'autoload': True})
+    phase = relationship("Phase", 
+             primaryjoin = "(PhaseAncestor.scenario_id == Phase.scenario_id) &\
+                            (PhaseAncestor.phase_id == Phase.id)")
+    ancestor = relationship("Phase", 
+             primaryjoin = "(PhaseAncestor.scenario_id == Phase.scenario_id) &\
+                            (PhaseAncestor.ancestor_phase_id == Phase.id)")
 
 
 class Node(Base):
-    """
-    """
-    __tablename__ = 'nodes'
 
-    id = Column(Integer, primary_key=True)
+    __tablename__ = 'nodes'
+    __table_args__ = {'autoload': True}
 
     point = GeometryColumn(
-        Point(dimension=2, spatial_index=True)
-        )
+            Point(dimension=2, spatial_index=True)
+            )
 
-    weight = Column(Integer)
+    node_type = relationship("NodeType")
+    
+    scenario = relationship(Scenario)
+    phase = relationship(Phase)
 
-    node_type_id = Column(Integer, ForeignKey('nodetypes.id'))
-    node_type = relationship(
-        NodeType,
-        primaryjoin=node_type_id == NodeType.id
-        )
-
-    scenario_id = Column(Integer, ForeignKey('scenarios.id'))
-    scenario = relationship(
-        Scenario,
-        primaryjoin=scenario_id == Scenario.id
-        )
-
-    def __init__(self, point, weight, node_type, scenario):
+    def __init__(self, point, weight, node_type, phase):
         self.point = point
         self.weight = weight
         self.node_type = node_type
-        self.scenario = scenario
-
-    def __repr__(self):
-        return '#<Node id: %s type: %s>' % (self.id, self.node_type.name)
+        self.phase = phase 
 
     def to_geojson(self):
         from shapely.wkb import loads
@@ -316,47 +378,33 @@ class Node(Base):
                                 'type': self.node_type.name,
                                 'weight': self.weight }
                 }
+    """
+    ancestors = relationship("PhaseAncestor", 
+        primaryjoin = "(Node.scenario_id == PhaseAncestor.scenario_id) &\
+                       (Node.phase_id == PhaseAncestor.ancestor_phase_id)")
+    """
 
 
 class Edge(Base):
-    """
-    """
 
     __tablename__ = 'edges'
-
-    id = Column(Integer, primary_key=True)
-
-    from_node_id = Column(Integer, ForeignKey('nodes.id'))
-    from_node = relationship(
-        Node,
-        backref='edge',
-        primaryjoin=from_node_id == Node.id
-        )
-
-    to_node_id = Column(Integer, ForeignKey('nodes.id'))
-    to_node = relationship(
-        Node,
-        primaryjoin=to_node_id == Node.id
-        )
-
-    scenario_id = Column(Integer, ForeignKey('scenarios.id'))
-    scenario = relationship(
-        Scenario,
-        primaryjoin=scenario_id == Scenario.id
-        )
-
-    distance = Column(Integer)
-
-    def __init__(self, scenario, from_node, to_node, distance):
-        self.scenario = scenario
-        self.from_node = from_node
-        self.to_node = to_node
-        self.distance = distance
+    __table_args__ = {'autoload': True}
 
 
-    
-    def __repr__(self):
-        return '#<Edge from:%s to: %s>' % (self.from_node.id, self.to_node.id)
+def get_cumulative_nodes(scenario_id, phase_id, cls_or_fun=Node, node_type=None):
+    session = DBSession()
+    q = session.query(cls_or_fun).\
+            join(Phase).\
+            join(PhaseAncestor,
+                 (Phase.id == PhaseAncestor.ancestor_phase_id) &\
+                 (Phase.scenario_id == PhaseAncestor.scenario_id)).\
+            filter((PhaseAncestor.scenario_id == scenario_id) &\
+                   (PhaseAncestor.phase_id == phase_id))
+
+    if(node_type):
+        q = q.join(NodeType).filter(NodeType.name == node_type)
+
+    return q
 
 
 def get_coords(nodes):
@@ -372,12 +420,4 @@ def get_coords(nodes):
     coord_fun = get_coord_fun(DBSession)
     return map(coord_fun, nodes)
 
-
-# Needed this to add the nodes table to the PostGIS geometry_table.
 GeometryDDL(Node.__table__)
-
-
-def initialize_sql(engine):
-    DBSession.configure(bind=engine)
-    Base.metadata.bind = engine
-    Base.metadata.create_all(engine)

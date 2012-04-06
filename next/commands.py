@@ -2,7 +2,7 @@ import logging
 from paste.script.command import Command
 from pyramid.paster import bootstrap
 from sqlalchemy import engine_from_config
-from next.models import initialize_sql
+from next import initialize_sql
 
 
 logger = logging.getLogger(__name__)
