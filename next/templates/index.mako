@@ -21,14 +21,16 @@
         </tr>
       </thead>
       <tbody>
+        <% from next.model.models import get_cumulative_nodes %>
         % for scenario in scenarios:        
         <tr>
           <td>${scenario.id}</td>
           <td>             
-            <a href="${request.route_url('show-scenario',id=scenario.id)}">${scenario}</a>
+            <a href="${request.route_url('show-phase',id=scenario.id, phase_id=1)}">${scenario}</a>
           </td>
           <td>
-            ${scenario.get_nodes().count()}
+           
+            ${get_cumulative_nodes(scenario.id, 1).count()}
           </td>
           <td>
             <input name="scenarios" type="checkbox" value="${scenario.id}"/>

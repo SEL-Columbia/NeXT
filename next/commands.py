@@ -32,7 +32,7 @@ class ImportFixtures(Command):
 
     def command(self):
         from yaml import load
-        from next.models import Base
+        from next import Base
         from shapely.wkt import loads
 
         config_uri = self.args[0]
@@ -131,3 +131,4 @@ class ShapefileConvert(Command):
             geometry.TransformTo(sp)
             #print geometry.ExportToWkt()
             print '%s, %s' % (geometry.GetX(), geometry.GetY())
+

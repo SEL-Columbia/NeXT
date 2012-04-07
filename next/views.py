@@ -15,14 +15,14 @@ from pyramid.httpexceptions import HTTPForbidden
 from geoalchemy import WKTSpatialElement
 from sqlalchemy.sql import text
 
-from next.models import Scenario
-from next.models import Phase
-from next.models import Node
-from next.models import Edge
-from next.models import NodeType
-from next.models import DBSession
-from next.models import get_node_type
-from next.models import get_cumulative_nodes
+from next.model.models import Scenario
+from next.model.models import Phase
+from next.model.models import Node
+from next.model.models import Edge
+from next.model.models import NodeType
+from next.model.models import DBSession
+from next.model.models import get_node_type
+from next.model.models import get_cumulative_nodes
 from next.import_helpers import import_nodes
 from spatial_utils import pg_import
 
@@ -66,7 +66,6 @@ def write_tmp_file(post_file, tmp_file):
 def index(request):
     session = DBSession()
     sc_dict = {'scenarios': session.query(Scenario).all()}
-    import pdb; pdb.set_trace()
     return sc_dict 
 
 

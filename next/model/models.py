@@ -9,6 +9,8 @@ from sqlalchemy import Integer
 from sqlalchemy import Unicode
 from sqlalchemy import ForeignKey
 
+from sqlalchemy.ext.declarative import declarative_base
+
 from sqlalchemy.orm import scoped_session
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import relationship
@@ -17,8 +19,9 @@ from sqlalchemy.sql import text
 from sqlalchemy.sql import func
 from zope.sqlalchemy import ZopeTransactionExtension
 import shapely
-from next import Base
-from next import DBSession 
+from next.model import Base
+from next.model import DBSession 
+
 
 
 logger = logging.getLogger(__name__)
@@ -34,7 +37,6 @@ class NodeType(Base):
 
     def __init__(self, name):
         self.name = name
-
 
 
 class Scenario(Base):
@@ -71,6 +73,13 @@ class Scenario(Base):
 
         return None
     
+
+    def get_root_phase(self):
+        session = DBSession()
+        phase = session.query(Phase).\
+                filter(Phase.scenario_id == self.id & Phase.id == 1).first()
+        return phase
+
 
     def to_geojson(self):
         bounds = self.get_bounds(srid=4326)

@@ -4,18 +4,20 @@ from pyramid import testing
 from geoalchemy import WKTSpatialElement
 import simplejson
 
-from sqlalchemy import create_engine
-from next import initialize_sql, DBSession
-initialize_sql(
-    create_engine('postgresql://postgres:password@localhost/next_testing')
-)
-
-from next.models import Scenario, Phase, Node, Edge, NodeType, get_node_type
+def _initTestingDB():
+    from sqlalchemy import create_engine
+    from next.model import initialize_sql
+    from next.model import DBSession
+    initialize_sql(
+        create_engine('postgresql://postgres:password@localhost/next_testing')
+    )
+    return DBSession()
 
 def _initTestData(session):
     # Initialize Scenario with 2 demand nodes and 2 supply_nodes
     # Assumes Reference Data (i.e. NodeTypes) are loaded
     
+    from next.model.models import Scenario, Phase, Node, get_node_type
     scenario = Scenario("Test")
     session.add(scenario)
     session.flush()
@@ -64,7 +66,7 @@ def _initTestData(session):
 class TestMyView(unittest.TestCase):
     def setUp(self):
         self.config = testing.setUp()
-        self.session = DBSession()
+        self.session = _initTestingDB()
         self.connection = self.session.connection()
         self.trans = self.connection.begin()
         # many of the views call show-phase
@@ -112,6 +114,7 @@ class TestMyView(unittest.TestCase):
         self.assertEqual("Test", name)
 
     def test_show_phases(self):
+        from next.model.models import Scenario
         from next.views import show_phases
         request = testing.DummyRequest()
         sc1 = self.session.query(Scenario).filter(Scenario.name == "Test").first()
@@ -135,6 +138,7 @@ class TestMyView(unittest.TestCase):
        
 
     def test_create_scenario(self):
+        from next.model.models import Scenario, Node
         from next.views import create_scenario
         import StringIO
         import cgi
@@ -175,6 +179,7 @@ class TestMyView(unittest.TestCase):
 
 
     def test_create_edges(self):
+        from next.model.models import Scenario, Node, Edge
         from next.views import create_edges
         sc1 = self.session.query(Scenario).filter(Scenario.name == "Test").first()
         params = {'id': sc1.id, 'phase_id': 2}
@@ -201,6 +206,7 @@ class TestMyView(unittest.TestCase):
 
 
     def test_show_phase_nodes(self):
+        from next.model.models import Scenario
         from next.views import show_phase_nodes, create_edges
         sc1 = self.session.query(Scenario).filter(Scenario.name == "Test").first()
         params = {'id': sc1.id, 'phase_id': 2}
@@ -229,6 +235,7 @@ class TestMyView(unittest.TestCase):
         
 
     def test_graph_phase(self):
+        from next.model.models import Scenario
         from next.views import graph_phase, create_edges
         sc1 = self.session.query(Scenario).filter(Scenario.name == "Test").first()
         request = testing.DummyRequest()
@@ -247,6 +254,7 @@ class TestMyView(unittest.TestCase):
 
 
     def test_graph_phase_cumul(self):
+        from next.model.models import Scenario
         from next.views import graph_phase_cumul, create_edges
         sc1 = self.session.query(Scenario).filter(Scenario.name == "Test").first()
         request = testing.DummyRequest()
@@ -264,6 +272,7 @@ class TestMyView(unittest.TestCase):
 
 
     def test_find_demand_with(self):
+        from next.model.models import Scenario
         from next.views import find_demand_with, create_edges
         sc1 = self.session.query(Scenario).filter(Scenario.name == "Test").first()
         request = testing.DummyRequest()
@@ -277,6 +286,7 @@ class TestMyView(unittest.TestCase):
         self.assertEqual(0, total['total'])
 
     def test_create_supply_nodes(self):
+        from next.model.models import Scenario
         from next.views import create_supply_nodes, create_edges
         sc1 = self.session.query(Scenario).filter(Scenario.name == "Test").first()
         request = testing.DummyRequest()
@@ -292,6 +302,7 @@ class TestMyView(unittest.TestCase):
         self.assertEqual(4, len(demand_nodes['features']))
         
     def test_add_nodes(self):
+        from next.model.models import Scenario
         from next.views import add_nodes
         sc1 = self.session.query(Scenario).filter(Scenario.name == "Test").first()
         request = testing.DummyRequest()
@@ -331,7 +342,7 @@ class TestMyView(unittest.TestCase):
 class TestDatabase(unittest.TestCase):
     def setUp(self):
         self.config = testing.setUp()
-        self.session = DBSession()
+        self.session = _initTestingDB()
 
     def tearDown(self):
         self.session.rollback()
@@ -339,19 +350,19 @@ class TestDatabase(unittest.TestCase):
         testing.tearDown()
 
     def _get_scenario(self):
-        from next.models import Scenario
+        from next.model.models import Scenario
         return Scenario(u'scenario1')
 
     def _get_phase(self):
-        from next.models import Phase
+        from next.model.models import Phase
         return Phase(self._get_scenario())
 
     def _get_node_type(self):
-        from next.models import NodeType
+        from next.model.models import NodeType
         return NodeType(u'demand')
 
     def _get_node(self):
-        from next.models import Node
+        from next.model.models import Node
         from geoalchemy import WKTSpatialElement
         return Node(
             WKTSpatialElement('POINT (1 1)'),
@@ -361,19 +372,19 @@ class TestDatabase(unittest.TestCase):
             )
 
     def test_scenario(self):
-        from next.models import Scenario
+        from next.model.models import Scenario
         s1 = self._get_scenario()
         self.session.add(s1)
         s2 = self.session.query(Scenario).first()
         self.assertEqual(s1.name, s2.name)
 
     def test_node_type(self):
-        from next.models import NodeType
+        from next.model.models import NodeType
         _type = NodeType(u'demand')
         self.session.add(_type)
 
     def test_node(self):
-        from next.models import Node
+        from next.model.models import Node
         n1 = self._get_node()
         self.session.add(n1)
         n2 = self.session.query(Node).first()
@@ -382,7 +393,7 @@ class TestDatabase(unittest.TestCase):
 class TestImport(unittest.TestCase):
 
     def test_get_import_spec(self):
-        from import_helpers import get_import_spec
+        from next.import_helpers import get_import_spec
         import StringIO
         csv_with_hdr = "val,weight,lat,lon\n1,9,0.1,1.1\n2,7,1.1,0.1"
         csv_stream = StringIO.StringIO(csv_with_hdr)
