@@ -151,7 +151,7 @@ var load_page = function  (options) {
 
     var stop = $('#stop-editing');
     var edit = $('#add-supply-node');
-    var run  = $('#run-scenario');
+    var run  = $('#add-nodes-to-new-phase');
     var auto_add  = $('#auto-add-supply-nodes');
 
     edit.click(function() {
@@ -167,55 +167,50 @@ var load_page = function  (options) {
       edit_control.deactivate(); 
       
       if (new_nodes.features.length !==0 ) {         
-        $('#run-scenario').removeClass('disabled');        
+        $('#add-nodes-to-new-phase').removeClass('disabled');        
       }      
     });
     
     run.click(function() { 
-      var runp = confirm('Re-running will delete your original data, still re-run?');
-      if (runp) {  
-        // steps
-        // sync new data with old facility datasets via post
-        // call the run url for the scenario
-        // route user to new scenario page.
-        var facilities = _.map(
-          new_nodes.features, 
-          function(feature) { 
-            var geometry = feature.geometry.transform(
-              new OpenLayers.Projection('EPSG:900913'),
-              new OpenLayers.Projection('EPSG:4326')
-            );
-            
-            var geoJSON = new OpenLayers.Format.GeoJSON();
-            point = geoJSON.extract.point(geometry);
-            return { 'type': 'Features', 
-                     'geometry': {
-                         'type': 'Point', 
-                         'coordinates': point
-                      }, 
-                     'properties': {
-                          'type': 'supply',
-                          'weight': 1
-                     }
+      // steps
+      // sync new data with old facility datasets via post
+      // call the url for the phase
+      // route user to new phase page.
+      var facilities = _.map(
+        new_nodes.features, 
+        function(feature) { 
+          var geometry = feature.geometry.transform(
+            new OpenLayers.Projection('EPSG:900913'),
+            new OpenLayers.Projection('EPSG:4326')
+          );
+          
+          var geoJSON = new OpenLayers.Format.GeoJSON();
+          point = geoJSON.extract.point(geometry);
+          return { 'type': 'Features', 
+                   'geometry': {
+                       'type': 'Point', 
+                       'coordinates': point
+                    }, 
+                   'properties': {
+                        'type': 'supply',
+                        'weight': 1
                    }
-                  
-            // return {x: geometry.x, y: geometry.y};            
-          }
-        )
+                 }
+                
+          // return {x: geometry.x, y: geometry.y};            
+        }
+      )
 
-        var features = {'features': facilities }
-        $.ajax({
-          type: 'POST',
-          url: options.new_node_url,
-          data: JSON.stringify(features),
-          contentType: 'application/json; charset=utf-8',
-          success: function(data) { 
-            window.location = '/scenarios/' + options.scenario;
-          },         
-        });
-      } else { 
-        // do nothing
-      }
+      var features = {'features': facilities }
+      $.ajax({
+        type: 'POST',
+        url: options.new_node_url,
+        data: JSON.stringify(features),
+        contentType: 'application/json; charset=utf-8',
+        success: function(data) { 
+          window.location = '/scenarios/' + data['scenario_id'] + '/phases/' + data['phase_id'];
+        },         
+      });
      
     });
 
@@ -227,7 +222,8 @@ var load_page = function  (options) {
                                   'n': $('#num_supply_nodes').val()}),
             contentType: 'application/json; charset=utf-8',
             success: function(data) { 
-                window.location = '/scenarios/' + options.scenario;
+                window.location = '/scenarios/' + data['scenario_id'] + '/phases/' + data['phase_id'];
+                //window.location = '/scenarios/' + options.scenario + '/phases/' + options.phase;
             }
         });
     });

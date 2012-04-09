@@ -270,7 +270,9 @@ class Phase(Base):
         """
         q = get_cumulative_nodes(self.scenario_id, self.id, cls_or_fun=func.sum(Node.weight), node_type='demand')
         total = q.join(Edge, Node.id == Edge.from_node_id)\
-                .filter(Edge.distance <= distance)
+                .filter((Edge.scenario_id == self.scenario_id) & 
+                        (Edge.phase_id == self.id) & 
+                        (Edge.distance <= distance))
 
         #Check whether we have results
         if(total.count() > 0 and (total[0][0] != None)):

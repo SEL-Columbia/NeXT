@@ -13,7 +13,7 @@ DEPLOYMENTS = {
     'stage': {
         'host_string': 'modwsgi@128.59.149.71:12127',
         'project': 'next_stage', 
-        'branch': 'master'
+        'branch': 'add_phases'
         }, 
     'prod': {
         'host_string': 'modwsgi@spatialplanner.modilabs.org:12127',
@@ -45,7 +45,7 @@ def deploy(deployment):
     pull(deployment)        
     run_in_virtualenv("pip install -r %s" % env.pip_requirements_file)
     with cd(env.src_directory):
-        run("sudo su postgres ./load-sql.sh %s" % env.dbname)
+        # run("sudo su postgres ./load-sql.sh %s" % env.dbname)
         run_in_virtualenv("python setup.py install")
     
     run('touch %s' % env.wsgi_file)

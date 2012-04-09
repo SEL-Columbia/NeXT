@@ -35,6 +35,7 @@ def get_object_or_404(cls, request, id_fields=('id',)):
     # import pdb; pdb.set_trace()
     if id_vals is None:
         raise NameError('You have no fields that match in your request matchdict')
+    # import pdb; pdb.set_trace()
     obj = session.query(cls).get(id_vals)
     if obj is not None:
         return obj
@@ -277,6 +278,8 @@ def show_phase_demand_json(phase):
     where nodes.scenario_id = :sc_id and
     nodes.phase_id = phase_ancestors.ancestor_phase_id and
     phase_ancestors.phase_id = :ph_id and
+    edges.scenario_id = phase_ancestors.scenario_id and
+    edges.phase_id = phase_ancestors.phase_id and
     nodes.id = edges.from_node_id and
     nodes.node_type_id = nodetypes.id and
     nodetypes.name='demand'
@@ -346,8 +349,12 @@ def create_supply_nodes(request):
     # need to flush so that create_edges knows about new nodes
     session.flush()
     child_phase.create_edges()
-    return HTTPFound(
-        location=request.route_url('show-phase', id=phase.scenario_id, phase_id=child_phase.id))
+    return json_response(
+        {'scenario_id': child_phase.scenario_id,
+         'phase_id': child_phase.id}
+        )
+    #return HTTPFound(
+    #    location=request.route_url('show-phase', id=phase.scenario_id, phase_id=child_phase.id))
 
     
 @view_config(route_name='phase-nodes', request_method='POST')
@@ -372,9 +379,11 @@ def add_nodes(request):
         new_nodes.append(node)
     session.add_all(new_nodes)
     session.flush()
-    phase.create_edges()
-    #TODO:  How should we respond here?
-    return Response(str(new_nodes))
+    child_phase.create_edges()
+    return json_response(
+        {'scenario_id': child_phase.scenario_id,
+         'phase_id': child_phase.id}
+        )
 
 
 @view_config(route_name='remove-scenarios')
