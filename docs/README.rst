@@ -1,6 +1,20 @@
 Releases
 =========
 
+**0.3          [2012-04-09]**
+
+Introduced "Phases":
+- Each scenario can have a tree of phases
+- A phase consitutes the cumulative demand/supply lineage
+- Each addition of supply creates a new child phase
+
+Flexible csv import:
+- considers header fields of:
+  - longitude (or lon or x)
+  - latitude (or lat or y)
+  - weight
+If no header, assumes columns are longitude, latitude and weight
+
 **0.2a-407c53e [2011-09-29]**
 
 Fixed BUG in cumulative demand SQL that was causing browser crash.
