@@ -77,7 +77,7 @@ class Scenario(Base):
     def get_root_phase(self):
         session = DBSession()
         phase = session.query(Phase).\
-                filter(Phase.scenario_id == self.id & Phase.id == 1).first()
+                filter((Phase.scenario_id == self.id) & (Phase.id == 1)).first()
         return phase
 
 
@@ -116,6 +116,24 @@ class Scenario(Base):
 
         return root
 
+    def get_phases_tree(self):
+        phase_dict = {}
+        root = None
+        for phase in self.phases:
+            phase_dict[phase.id] = {'id': phase.id, 'children': []}
+
+        for phase in self.phases:
+            parent = None
+            if(phase_dict.has_key(phase.parent_id)):
+                parent = phase_dict[phase.parent_id]
+            if(parent):
+                child = phase_dict[phase.id]
+                parent['children'].append(child)
+            else:
+                #we found the root
+                root = phase_dict[phase.id]
+
+        return root
 
 class Phase(Base):
 

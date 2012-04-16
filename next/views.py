@@ -62,6 +62,28 @@ def write_tmp_file(post_file, tmp_file):
     open_tmp.close()
 
 
+def to_tree_rows(root_phase):
+    """
+    Create row based representation of tree to easily print something like:
+    \1
+     \2
+      \3
+     \4
+      \5
+      \6
+    \7
+    """
+    rows = []
+    def populate_rows(ph, depth):
+        row = {'id': ph['id'], 'cols': depth}
+        rows.append(row)
+        for child in ph['children']:
+            populate_rows(child, depth + 1)
+
+    populate_rows(root_phase, 0)
+    return rows
+
+
 #View functions
 @view_config(route_name='index', renderer='index.mako')
 def index(request):
@@ -316,7 +338,13 @@ def graph_phase_cumul(request):
 def show_phase(request):
     """
     """
-    return {'phase': get_object_or_404(Phase, request, ('phase_id', 'id'))}
+    scenario = get_object_or_404(Scenario, request)
+    phase = get_object_or_404(Phase, request, ('phase_id', 'id'))
+    phase_tree = scenario.get_phases_tree()
+    tree_rows = to_tree_rows(phase_tree)
+    return {'phase': phase,
+            'scenario': scenario,
+            'phase_tree_rows': tree_rows}
 
 
 @view_config(route_name='find-demand-within')

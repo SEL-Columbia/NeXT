@@ -64,10 +64,12 @@
   
 
   <script type="text/javascript">
-
+    
+    /*
     $(function() {
       $('.tabs a:first').tab('show')
     });
+    */
 
     $(function() { 
 
@@ -98,8 +100,19 @@
 
   <h3>Results for: ${phase.scenario.name} ${phase.id}</h3>
   <br />
-
-  <!-- <div class="row"> -->
+  <div class="row" style="position:absolute;width:120px;height:80%;top:80px;left:40px;background-color:#fff;z-index:99;overflow:auto;">
+  <%
+    for row in phase_tree_rows:
+        str_row = '&nbsp;' * row['cols']
+        
+        phase_url = request.route_url('show-phase', id=phase.scenario_id, phase_id=row['id'])
+        href = "<a href=%s>%s</a>" % (phase_url, row['id'])
+        if(phase.id == row['id']):
+            href = "<a href=%s>%s*</a>" % (phase_url, row['id'])
+            
+        context.write("%s\\%s<br/>" % (str_row, href))
+  %>
+  </div>
     <ul class="tabs">
       <li class="active"><a href="#auto" data-toggle="tab">Auto</a></li>
       <li><a href="#manual" data-toggle="tab">Manual</a></li>
@@ -140,7 +153,6 @@
         -->
       </div>
     </div>
-  <!-- </div> -->
   <br /> 
 
   <div class="row">
