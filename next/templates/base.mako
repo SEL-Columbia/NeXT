@@ -3,7 +3,7 @@
   <head>
     
     <link rel="stylesheet"
-          href="${request.application_url}/static/bootstrap/bootstrap.min.css"
+          href="${request.application_url}/static/bootstrap/css/bootstrap.min.css"
           type="text/css" 
           media="screen" />
 
@@ -19,14 +19,12 @@
     ${self.header()}
   </head>
   <body>
-    <div class="topbar">
-      <div class="topbar-inner"> 
-        <div class="container"> 
-          <h1><a class="brand" href="${request.application_url}">Modi Labs Spatial
-          Planning Tool</a></h1>
-        </div>
+    <div class="navbar navbar-fixed-top">
+    <div class="navbar-inner">
+      <div class="container"> 
+        <h1><a class="brand" href="${request.application_url}">Modi Labs Spatial Planning Tool</a></h1>
       </div>
-
+    </div>
     </div>    
      <div class="container">
        <div class="content">

@@ -98,22 +98,30 @@
     -->
 </div>
 
-  <h3>Results for: ${phase.scenario.name} ${phase.id}</h3>
-  <br />
-  <div class="row" style="position:absolute;width:120px;height:80%;top:80px;left:40px;background-color:#fff;z-index:99;overflow:auto;">
+<!--<div class="container" style="position:absolute;width:120px;height:80%;top:80px;left:40px;background-color:#fff;z-index:99;overflow:auto;">-->
+<div class="content" style="position:absolute;width:120px;top:60px;left:20px;background-color:#fff;z-index:99;overflow:auto;">  
+  <div class="row" style="margin:1px;">
+  <h3>Phases</h3>
+  <ul class="nav nav-pills nav-stacked">
   <%
     for row in phase_tree_rows:
-        str_row = '&nbsp;' * row['cols']
+        row_space = '&nbsp;&nbsp;' * row['cols']
         
         phase_url = request.route_url('show-phase', id=phase.scenario_id, phase_id=row['id'])
-        href = "<a href=%s>%s</a>" % (phase_url, row['id'])
+        href = "<a href=%s>%s%s</a>" % (phase_url, row_space, row['id'])
+        row_str = "<li>%s</li>" % href
         if(phase.id == row['id']):
-            href = "<a href=%s>%s*</a>" % (phase_url, row['id'])
+            row_str = "<li class='active'>%s</li>" % href
             
-        context.write("%s\\%s<br/>" % (str_row, href))
+        context.write(row_str)
   %>
+  </ul>
   </div>
-    <ul class="tabs">
+</div>
+
+  <h3>Results for: ${phase.scenario.name} ${phase.id}</h3>
+  <br />
+    <ul class="nav nav-tabs">
       <li class="active"><a href="#auto" data-toggle="tab">Auto</a></li>
       <li><a href="#manual" data-toggle="tab">Manual</a></li>
     </ul>
@@ -122,13 +130,13 @@
       <!-- <div class="span7"> -->
         <form>
           <div class="row">
-          <div class="span3">
+          <div class="span2">
   	  <label for="supply_distance">Distance</label>
           </div>
           <div class="span2">
   	  <input type="text" name="supply_distance" id="supply_distance" value="1000" maxlength="10" style="width:60px"/>
           </div>
-          <div class="span3">
+          <div class="span2">
   	  <label for="num_supply_nodes">Number of Facilities</label>
           </div>
           <div class="span2">
@@ -156,8 +164,7 @@
   <br /> 
 
   <div class="row">
-    <div id="scenario-map" 
-         class="span16" 
+    <div id="scenario-map" class="span12"
          style="height: 500px;padding-top: 10px;">    
     </div>
   </div>

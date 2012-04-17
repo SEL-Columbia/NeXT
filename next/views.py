@@ -17,6 +17,7 @@ from sqlalchemy.sql import text
 
 from next.model.models import Scenario
 from next.model.models import Phase
+from next.model.models import PhaseAncestor
 from next.model.models import Node
 from next.model.models import Edge
 from next.model.models import NodeType
@@ -423,7 +424,7 @@ def remove_scenario(request):
         for sid in sc_pairs.dict_of_lists()['scenarios']:
             session.query(Edge).filter(Edge.scenario_id==int(sid)).delete()
             session.query(Node).filter(Node.scenario_id==int(sid)).delete()
-            session.query(AncestorPhase).filter(AncestorPhase.scenario_id==int(sid)).delete()
+            session.query(PhaseAncestor).filter(PhaseAncestor.scenario_id==int(sid)).delete()
             session.query(Phase).filter(Phase.scenario_id==int(sid)).delete()
             session.query(Scenario).filter(Scenario.id==int(sid)).delete()
 
