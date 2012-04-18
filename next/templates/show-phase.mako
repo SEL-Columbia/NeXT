@@ -102,7 +102,7 @@
 <div class="content" style="position:absolute;width:120px;top:60px;left:20px;background-color:#fff;z-index:99;overflow:auto;">  
   <div class="row" style="margin:1px;">
   <h3>Phases</h3>
-  <ul class="nav nav-pills nav-stacked">
+  <ul class="nav nav-list">
   <%
     for row in phase_tree_rows:
         row_space = '&nbsp;&nbsp;' * row['cols']
