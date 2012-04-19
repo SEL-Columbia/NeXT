@@ -13,7 +13,7 @@ DEPLOYMENTS = {
     'stage': {
         'host_string': 'modwsgi@128.59.149.71:12127',
         'project': 'next_stage', 
-        'branch': 'add_phases'
+        'branch': 'master'
         }, 
     'prod': {
         'host_string': 'modwsgi@spatialplanner.modilabs.org:12127',
