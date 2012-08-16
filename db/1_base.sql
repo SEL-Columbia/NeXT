@@ -92,7 +92,7 @@ BEGIN
  END;
  $$ LANGUAGE 'plpgsql';
 
--- Calculate n uniformly partitioned distances
+-- Calculate n uniformly partitioned *distances*
 CREATE OR REPLACE FUNCTION uniform_dists(
   scenario_id integer,
   phase_id integer,
@@ -103,6 +103,10 @@ $$
   SELECT distance FROM generate_series(
     (SELECT 1), 
     (SELECT max(distance) FROM edges WHERE scenario_id=$1),
+    -- step size is the larger of max(distance)/num_partitions 
+    -- (an int result rounded down) and 1
+    -- so that if the # partitions is greater than the
+    -- largest distance, the step is 1
     (SELECT max(distance) FROM 
       (SELECT 1 distance UNION ALL 
        SELECT (max(distance) / $3) distance 
@@ -112,17 +116,20 @@ $$
 LANGUAGE SQL;
 
 -- Calculate n uniform sampled distances
+-- (equal number of records within each interval)
 CREATE OR REPLACE FUNCTION uniform_sample_dists(
   scenario_id integer,
   phase_id integer,
   num_partitions integer)
-  RETURNS TABLE (distance integer)
+  RETURNS TABLE (distance integer, row_num bigint)
   AS
 $$
-  SELECT distance FROM
+  SELECT distance, samples.row_num FROM
     (SELECT row_num FROM generate_series(
       (SELECT 1), 
-      (SELECT count(*) FROM edges WHERE scenario_id=$1),
+      (SELECT count(*) FROM edges WHERE scenario_id=$1 and phase_id=$2),
+      -- step size is determined by num_records/num_partitions 
+      -- so that there are an equal number of records
       (SELECT max(ct) FROM 
         (SELECT 1 ct UNION ALL SELECT count(*) / 
           (SELECT min(ct) FROM (
@@ -132,14 +139,14 @@ $$
               num_parts FROM edges
         WHERE scenario_id=$1) parts_per )) row_num) samples,
      (SELECT row_number() over () row_num, distance FROM
-       (SELECT distance FROM edges WHERE scenario_id=$1
+       (SELECT distance FROM edges WHERE scenario_id=$1 and phase_id=$2
         ORDER BY distance) ordered_dists) ordered_dists_row_nums
      WHERE samples.row_num=ordered_dists_row_nums.row_num
 $$
 LANGUAGE SQL;
 
 -- Calculate the cumulative, weighted demand over distances
--- Distances defined by unifrom_sample_dists function
+-- Distances defined by uniform_sample_dists function
 CREATE OR REPLACE FUNCTION demand_over_dist(
   scenario_id integer,
   phase_id integer,
@@ -166,11 +173,12 @@ $$
       (SELECT n.id node_id, weight, e.distance
         FROM 
           edges e, 
-          nodes n,
-          phase_ancestors pa
+          nodes n
+          /* no need to join this --> phase_ancestors pa */
         WHERE 
+          /* no need to join
           pa.phase_id=$2 AND
-          pa.scenario_id=$1 AND
+          pa.scenario_id=$1 AND */
           n.node_type_id=1 AND
           e.from_node_id=n.id AND
           e.scenario_id=$1 AND
