@@ -112,6 +112,8 @@ var load_page = function  (options) {
       })
     });
     
+    map.addControl(new OpenLayers.Control.ScaleLine());
+
     map.addLayer(gsat);
     map.addLayer(gphy);
     map.addLayer(demand_nodes);
