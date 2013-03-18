@@ -29,3 +29,8 @@ form label {
 .olLayerGooglePoweredBy {
     visibility:hidden;
 }
+
+.olControlScaleLine {
+    left: 10px;
+    bottom: 40px;
+}
