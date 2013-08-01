@@ -32,7 +32,6 @@ class ImportFixtures(Command):
 
     def command(self):
         from yaml import load
-        from next import Base
         from shapely.wkt import loads
 
         config_uri = self.args[0]
@@ -48,6 +47,8 @@ class ImportFixtures(Command):
             pass
 
         initialize_sql(engine)
+
+        from next.model.models import Base
 
         tables = Base.metadata.tables
         for record in fixtures_data:
