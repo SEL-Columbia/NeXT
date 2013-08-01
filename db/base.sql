@@ -25,3 +25,6 @@
  END;
  $BODY$ LANGUAGE 'plpgsql' IMMUTABLE
    COST 100;
+
+-- Update the geometry srid for nodes.point
+SELECT UpdateGeometrySRID('nodes', 'point', 4326);
