@@ -60,9 +60,8 @@ The following applications/libraries are required by NeXT
   python-virtualenv
   python-pastescript (python lib for paster)
   postgresql-9.1 (and postgresql-server-dev-9.1)
-  PostGIS 1.5.3+ (see http://postgis.refractions.net/docs/ch02.html)
-  (note that PostGIS has several dependencies itself)
-
+  PostGIS 2.0 (see http://trac.osgeo.org/postgis/wiki/UsersWikiInstall)
+  (note that PostGIS 2.0 has several dependencies itself, like libgdal and libgeos)
 
 **Install & Run**
 
@@ -74,37 +73,43 @@ The following applications/libraries are required by NeXT
 
 2. Setup the virtualenv and activate it
 
-3. Install numpy via pip (not sure why this doesn't work via setup tools)
 
-::
-
-  pip install numpy 
-
-4. Install the python project requirements and deploy the development egg locally
+3. Install the python project requirements and deploy the development egg locally
    
 :: 
 
   pip install -r requirements.txt
   python setup.py develop
 
-5. Install openlayers javascript libraries into the project's "static" subdir (i.e. <project>/static/openlayers should contain the openlayers js and css files)
+4. Install openlayers javascript libraries into the project's "static" subdir (i.e. <project>/static/openlayers should contain the openlayers js and css files)
 
-7. Create the 'next' postgresql database and enable postgis extensions
+5. Create the 'next' postgresql database and enable postgis extensions
 
 ::
   
   ./drop-and-create.sh
 
-8. Populate 'next' node_types with demand and supply types
+This should create a postgis enabled db owned by user 'next'
+
+6. Create the next model via the next.sql script
+
+::
+
+  psql -d next -f db/next.sql
+  psql -d next -f db/migrations/phase_migration.sql
+
+You can ignore the "already exists" errors when running (TODO:  clean this step up)
+
+7. Populate 'next' node_types with demand and supply types
 
 ::
 
   paster import-fixtures <production | development>.ini fixtures.yaml  
 
-9. Load Custom DB Functions
+8. Load Custom DB Functions
 
 ::
-  ./load-sql.sh
+  ./load-sql.sh next
   
 9. Run the development server 
    
