@@ -9,7 +9,7 @@ def _initTestingDB():
     from next.model import initialize_sql
     from next.model import DBSession
     initialize_sql(
-        create_engine('postgresql://postgres:password@localhost/next_testing')
+        create_engine('postgresql://next@localhost/next_testing')
     )
     return DBSession()
 
