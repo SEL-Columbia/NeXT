@@ -69,6 +69,7 @@ ALTER TABLE public.nodes OWNER TO next;
 
 --
 -- Name: phase_ancestors; Type: TABLE; Schema: public; Owner: next; Tablespace: 
+-- This table is a denormalization that helps map to the object model
 --
 
 CREATE TABLE phase_ancestors (
