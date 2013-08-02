@@ -21,21 +21,21 @@ def get_import_spec(input_stream):
     for col in range(0, len(row0)):
         val = row0[col]
 
-        if(val in ['longitude', 'lon', 'x']):
+        if(val in ['longitude', 'Longitude', 'lon', 'Lon', 'x', 'X']):
             has_x = True
             x_col = col
             
-        if(val in ['latitude', 'lat', 'y']):
+        if(val in ['latitude', 'Latitude', 'lat', 'Lat', 'y', 'Y']):
             has_y = True
             y_col = col
 
-        if(val in ['weight']):
+        if(val in ['weight', 'Weight', 'population', 'Population', 'pop', 'Pop']):
             has_weight = True
             weight_col = col
 
     has_header = has_x | has_y
     weight_spec = {'value': 1}
-    if(len(row0) > 2):
+    if(len(row0) > 2 and ((not has_header) or (has_weight))):
         weight_spec = {'column': weight_col}
 
     #set the input_stream up for processing 
