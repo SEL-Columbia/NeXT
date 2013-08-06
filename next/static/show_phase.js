@@ -9,7 +9,16 @@ var load_page = function  (options) {
 
     var map = new OpenLayers.Map(
       options.mapDiv, 
-      {allOverlays: true, controls: []});
+      { 
+        allOverlays: true, 
+        controls: [
+          new OpenLayers.Control.ScaleLine(),
+          new OpenLayers.Control.Navigation(),
+          new OpenLayers.Control.LayerSwitcher(),
+          new OpenLayers.Control.MousePosition(),
+        ]
+      }
+    );
     
     var gsat = new OpenLayers.Layer.Google(
       "Google Satellite",
@@ -100,7 +109,7 @@ var load_page = function  (options) {
 
     var supply_style = new OpenLayers.Style({
       pointRadius: 6,
-      fillColor: '#5e0f56',
+      fillColor: '#ee0f56',
     });
 
     var supply_nodes = new OpenLayers.Layer.Vector('supply-nodes', { 
@@ -112,8 +121,6 @@ var load_page = function  (options) {
       })
     });
     
-    map.addControl(new OpenLayers.Control.ScaleLine());
-
     map.addLayer(gsat);
     map.addLayer(gphy);
     map.addLayer(demand_nodes);
@@ -122,12 +129,9 @@ var load_page = function  (options) {
 
     var bounds = new OpenLayers.Bounds.fromArray(options.bbox);
     map.zoomToExtent(bounds);
-    map.addControl(new OpenLayers.Control.LayerSwitcher());
-    map.addControl(new OpenLayers.Control.Navigation());
-    map.addControl(new OpenLayers.Control.MousePosition());
 
     // new layer to allow users to add new points
-    new_nodes = new OpenLayers.Layer.Vector();
+    new_nodes = new OpenLayers.Layer.Vector('new-nodes');
     map.addLayer(new_nodes);
 
     // add control to allow users to add a new point
@@ -329,7 +333,7 @@ var load_page = function  (options) {
 
     var r = Raphael('holder');
     r.g.txtattr.font = "12px 'Fontin Sans', Fontin-Sans, sans-serif";
-    r.g.text(40, 20, "% Population");
+    r.g.text(60, 20, "Population (%)");
     r.g.text(200, 270, "Distance (meters)");
     
     //buildLineGraph(r, xyVals);

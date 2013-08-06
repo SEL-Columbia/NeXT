@@ -131,7 +131,7 @@
         <form>
           <div class="row">
           <div class="span2">
-  	  <label for="supply_distance">Distance</label>
+  	  <label for="supply_distance">Distance (meters)</label>
           </div>
           <div class="span2">
   	  <input type="text" name="supply_distance" id="supply_distance" value="1000" maxlength="10" style="width:60px"/>
@@ -172,8 +172,8 @@
   <div class="row">
     <div class="span7" style="width: 270px;">
       <br />
-        <p>Percent of population within</p>
         <fieldset>
+          <label style="block">Percent population within (meters)</label>
           <input id="distance" type="text" name="distance" value="1000" />
         </fieldset>
       <h2 id="percent"></h2>
