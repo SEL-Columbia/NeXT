@@ -27,10 +27,15 @@ form label {
 
 /* HACK for a stupid Map Data pop-up */
 .olLayerGooglePoweredBy {
-    visibility:hidden;
+    display:none;
 }
 
+.olLayerGoogleCopyright {display:none;}
+
 .olControlScaleLine {
-    left: 10px;
-    bottom: 40px;
+    top: 10px;
+}
+
+.olControlMousePosition {
+    top: 10px;
 }
