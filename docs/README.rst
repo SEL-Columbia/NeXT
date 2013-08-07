@@ -96,7 +96,6 @@ This should create a postgis enabled db owned by user 'next'
 ::
 
   psql -d next -f db/next.sql
-  psql -d next -f db/migrations/phase_migration.sql
 
 You can ignore the "already exists" errors when running (TODO:  clean this step up)
 
