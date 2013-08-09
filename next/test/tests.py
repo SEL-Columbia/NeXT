@@ -99,6 +99,16 @@ class TestMyView(unittest.TestCase):
         response = index(request)
         self.assertTrue(isinstance(response, dict))
 
+    def test_bounds(self):
+        from next.model.models import Scenario
+        from next.views import show_phases
+        from shapely.geometry import Polygon
+        request = testing.DummyRequest()
+        sc1 = self.session.query(Scenario).filter(Scenario.name == "Test").first()
+        test_bounds = Polygon([(-2, -2), (1, -2), (1, 1), (-2, 1), (-2, -2)])        
+        actual_bounds = sc1.get_bounds(srid=4326)
+        self.assertTrue(test_bounds.equals(actual_bounds))
+
     def test_show_all(self):
         from next.views import show_all
         request = testing.DummyRequest()
