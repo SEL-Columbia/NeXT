@@ -15,14 +15,15 @@ from sqlalchemy.orm import scoped_session
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import relation
-from sqlalchemy.sql import text
+from sqlalchemy.sql import select, text
 from sqlalchemy.sql import func
+from geoalchemy2.shape import to_shape
 from zope.sqlalchemy import ZopeTransactionExtension
 import shapely
 from next.model import Base
 from next.model import DBSession 
 
-
+BASE_SRID = 4326
 
 logger = logging.getLogger(__name__)
 
@@ -60,18 +61,35 @@ class Scenario(Base):
         from shapely.wkt import loads
         session = DBSession()
         conn = session.connection()
-        sql = text(
-            '''select st_astext(
-               st_transform(st_setsrid(st_extent(point), 4326), :srid))
-               from nodes where scenario_id = :sc_id''')
-        #TODO:  Handle case where no nodes in scenario
-        rset = conn.execute(sql, srid=srid, sc_id=self.id)
-        if (rset.rowcount > 0):
-            rset1 = rset.fetchone()[0]
-            if(rset1):
-                return loads(rset1)
+        expr = select([func.ST_Transform(
+                         func.ST_SetSrid(
+                           func.ST_Extent(Node.point), 
+                         BASE_SRID), 
+                       srid)]).\
+               where(Node.scenario_id == self.id)
+        result = conn.execute(expr)
+        shp = None
+        if (result.rowcount > 0):
+            wkb = result.first()[0]
+            if(wkb is not None):
+                shp = to_shape(wkb)
+        # leave it open, as it's from the pool...conn.close()
+        result.close()
+        return shp
 
-        return None
+
+#        sql = text(
+#            '''select st_astext(
+#               st_transform(st_setsrid(st_extent(point), 4326), :srid))
+#               from nodes where scenario_id = :sc_id''')
+#        #TODO:  Handle case where no nodes in scenario
+#        rset = conn.execute(sql, srid=srid, sc_id=self.id)
+#        if (rset.rowcount > 0):
+#            rset1 = rset.fetchone()[0]
+#            if(rset1):
+#                return loads(rset1)
+#
+#        return None
     
 
     def get_root_phase(self):
