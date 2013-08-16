@@ -108,6 +108,7 @@ You can ignore the "already exists" errors when running (TODO:  clean this step 
 8. Load Custom DB Functions
 
 ::
+
   ./load-sql.sh next
   
 9. Run the development server 
@@ -126,9 +127,8 @@ You can ignore the "already exists" errors when running (TODO:  clean this step 
   apache2
   modwsgi (see http://code.google.com/p/modwsgi/wiki/QuickInstallationGuide)
   
-Production runs on mod_wsgi via apache.  You can find a tutorial here:  http://docs.pylonsproject.org/projects/pyramid/en/1.0-branch/tutorials/modwsgi/index.html.  As a simplified configuration, we simply add the apache modwsgi site configuration for next to the httpd.conf file.  The wsgi.load file needs to be <apache_dir>/mods-available dir and soft linked to the <apache_dir>/mods-enabled dir.  Once configured, restart apache.   
-
-
+Production runs on mod_wsgi via apache.  You can find a tutorial here:  http://docs.pylonsproject.org/projects/pyramid/en/1.0-branch/tutorials/modwsgi/index.html.  
+Our deployment is configure with a "next" config file in /etc/apache2/sites-available that references the NeXT/next.wsgi script in this repo.  This config is then soft linked to from the /etc/apache2/sites-enabled dir.  
 
 
 Use Cases
@@ -260,9 +260,7 @@ Open Questions
   system, or should that be handled by a different layer.
 
 - Service vs application. How do we envision our application? Is this
-  a service or a specific application? The issue I have with figuring 
-
-
+  a service or a specific application? 
 
 
 Parts
