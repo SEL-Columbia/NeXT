@@ -108,6 +108,10 @@ class TestMyView(unittest.TestCase):
         test_bounds = Polygon([(-2, -2), (1, -2), (1, 1), (-2, 1), (-2, -2)])        
         actual_bounds = sc1.get_bounds(srid=4326)
         self.assertTrue(test_bounds.equals(actual_bounds))
+        phase1 = sc1.phases[0]
+        test_bounds = Polygon([(-1, -1), (1, -1), (1, 1), (-1, 1), (-1, -1)])        
+        actual_bounds = phase1.get_bounds(srid=4326)
+        self.assertTrue(test_bounds.equals(actual_bounds))
 
     def test_show_all(self):
         from next.views import show_all
