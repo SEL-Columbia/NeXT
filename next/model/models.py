@@ -55,42 +55,24 @@ class Scenario(Base):
 
     def get_bounds(self, srid=900913):
         """
-        Method to find the bound box for a scenario.
-        TODO, remove the hard coded sql text
+        Method to find the bound box for a scenario (based on all of
+        its underlying nodes)
         """
         from shapely.wkt import loads
         session = DBSession()
-        conn = session.connection()
-        expr = select([func.ST_Transform(
+        extent_query = session.query(func.ST_Transform(
                          func.ST_SetSrid(
                            func.ST_Extent(Node.point), 
                          BASE_SRID), 
-                       srid)]).\
-               where(Node.scenario_id == self.id)
-        result = conn.execute(expr)
+                       srid)).\
+               filter(Node.scenario_id == self.id)
+        tup = extent_query.one() # would throw an exception if more than one result
         shp = None
-        if (result.rowcount > 0):
-            wkb = result.first()[0]
-            if(wkb is not None):
-                shp = to_shape(wkb)
-        # leave it open, as it's from the pool...conn.close()
-        result.close()
+        wkb = tup[0]
+        if(wkb is not None):
+            shp = to_shape(wkb)
         return shp
 
-
-#        sql = text(
-#            '''select st_astext(
-#               st_transform(st_setsrid(st_extent(point), 4326), :srid))
-#               from nodes where scenario_id = :sc_id''')
-#        #TODO:  Handle case where no nodes in scenario
-#        rset = conn.execute(sql, srid=srid, sc_id=self.id)
-#        if (rset.rowcount > 0):
-#            rset1 = rset.fetchone()[0]
-#            if(rset1):
-#                return loads(rset1)
-#
-#        return None
-    
 
     def get_root_phase(self):
         session = DBSession()
@@ -154,6 +136,10 @@ class Scenario(Base):
         return root
 
 class Phase(Base):
+    """ 
+    Represents a branch from a scenario or another phase.
+    See `PhaseAncector` for more on the Phase tree hierarchy.
+    """
 
     __tablename__ = 'phases'
     __table_args__ = {'autoload': True}
@@ -177,35 +163,31 @@ class Phase(Base):
         self.scenario = scenario
         self.parent = parent
         self.name = name
-
-
         
 
     def get_bounds(self, srid=900913):
         """
-        Method to find the bound box for a scenario.
-        TODO, remove the hard coded sql text
+        Method to find the bounding box for a phase (based on all of
+        its underlying nodes and those of its ancestors)
         """
         from shapely.wkt import loads
         session = DBSession()
-        conn = session.connection()
-        sql = text(
-            '''select st_astext(
-               st_transform(st_setsrid(st_extent(point), 4326), :srid))
-               from nodes, phase_ancestors where 
-               phase_ancestors.scenario_id = :sc_id and
-               phase_ancestors.phase_id = :phase_id and
-               nodes.phase_id = phase_ancestors.ancestor_phase_id and
-               nodes.scenario_id = phase_ancestors.scenario_id''')
-        #TODO:  Handle case where no nodes in scenario
-        rset = conn.execute(sql, srid=srid, sc_id=self.scenario_id, phase_id=self.id)
-        if (rset.rowcount > 0):
-            rset1 = rset.fetchone()[0]
-            if(rset1):
-                return loads(rset1)
+        extent_query = session.query(func.ST_Transform(
+                         func.ST_SetSrid(
+                           func.ST_Extent(Node.point), 
+                         BASE_SRID), 
+                       srid)).\
+               filter((PhaseAncestor.scenario_id == self.scenario_id) &
+                     (PhaseAncestor.phase_id == self.id) & 
+                     (Node.phase_id == PhaseAncestor.ancestor_phase_id) & 
+                     (Node.scenario_id == PhaseAncestor.scenario_id))
+        tup = extent_query.one() # would throw an exception if more than one result
+        shp = None
+        wkb = tup[0]
+        if(wkb is not None):
+            shp = to_shape(wkb)
+        return shp
 
-        return None
-    
 
     def to_geojson(self):
         bounds = self.get_bounds(srid=4326)
@@ -382,6 +364,29 @@ class Phase(Base):
 
 
 class PhaseAncestor(Base):
+
+    """ 
+    Maintains the hierarchical relationship between phases.  
+    For any `Phase`, the PhaseAncestor table maintains a record 
+    associating it with *each* phase in its ancestry.  
+
+    For example, given the following phase ancestry:
+
+    1        The table representation would be:
+    \        phase_id|phase_ancestor_id
+     2              1|-
+      \             2|1
+       3            3|2
+    \               3|1
+     4              4|1
+
+     Note that phase 3 references both phase 1 AND phase 1.  
+     This allows for simplified, non-recursive joins.  
+
+     To accomodate this, there's a trigger defined on the phase table
+     to populate phase_ancestors upon add/delete of a phase.
+
+     """
 
     __tablename__ = 'phase_ancestors'
     __table_args__ = ({'autoload': True})
