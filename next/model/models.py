@@ -1,15 +1,10 @@
 import logging
-from geoalchemy import Column
-from geoalchemy import GeometryColumn
-from geoalchemy import Point
-from geoalchemy import GeometryDDL
-from geoalchemy import WKTSpatialElement
 
+from sqlalchemy import Column
 from sqlalchemy import Integer
 from sqlalchemy import Unicode
 from sqlalchemy import ForeignKey
 
-from sqlalchemy.ext.declarative import declarative_base
 
 from sqlalchemy.orm import scoped_session
 from sqlalchemy.orm import sessionmaker
@@ -17,24 +12,28 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.orm import relation
 from sqlalchemy.sql import select, text
 from sqlalchemy.sql import func
-from geoalchemy2.shape import to_shape
-from zope.sqlalchemy import ZopeTransactionExtension
+
+from geoalchemy2 import Geometry
+from geoalchemy2.shape import to_shape, from_shape
+
 import shapely
-from next.model import Base
-from next.model import DBSession 
+
+from . import Base, DBSession
 
 BASE_SRID = 4326
 
 logger = logging.getLogger(__name__)
 
-def get_node_type(node_type):
-    session = DBSession()
+def get_node_type(node_type, session):
     return session.query(NodeType).filter_by(name=unicode(node_type)).first()
 
 class NodeType(Base):
 
     __tablename__ = 'nodetypes'
-    __table_args__ = {'autoload': True}
+    # __table_args__ = {'autoload': True}
+
+    id = Column(Integer, primary_key=True)
+    name = Column(Unicode)
 
     def __init__(self, name):
         self.name = name
@@ -51,14 +50,13 @@ class Scenario(Base):
         self.name = name
 
     def __repr__(self):
-        return '#<Scenario %s>' % self.name
+        return '#<Scenario %s,%s>' % (self.name, self.id)
 
     def get_bounds(self, srid=900913):
         """
         Method to find the bound box for a scenario (based on all of
         its underlying nodes)
         """
-        from shapely.wkt import loads
         session = DBSession()
         extent_query = session.query(func.ST_Transform(
                          func.ST_SetSrid(
@@ -85,7 +83,7 @@ class Scenario(Base):
         bounds = self.get_bounds(srid=4326)
         coords = []
         if (bounds):
-            if (isinstance(bounds, shapely.geometry.point.Point)):
+            if (isinstance(bounds, shapely.geometry.Point)):
                 coords = bounds.bounds
             else:
                 coords = list(bounds.exterior.coords)
@@ -170,7 +168,6 @@ class Phase(Base):
         Method to find the bounding box for a phase (based on all of
         its underlying nodes and those of its ancestors)
         """
-        from shapely.wkt import loads
         session = DBSession()
         extent_query = session.query(func.ST_Transform(
                          func.ST_SetSrid(
@@ -193,7 +190,7 @@ class Phase(Base):
         bounds = self.get_bounds(srid=4326)
         coords = []
         if (bounds):
-            if (isinstance(bounds, shapely.geometry.point.Point)):
+            if (isinstance(bounds, shapely.geometry.Point)):
                 coords = bounds.bounds
             else:
                 coords = list(bounds.exterior.coords)
@@ -312,23 +309,25 @@ class Phase(Base):
         """
         #TODO:  Take weight from points?
         session = DBSession()
-        node_type = get_node_type(type_string)
+        node_type = get_node_type(type_string, session)
         new_nodes = []
         for pt in points:
-            geom = WKTSpatialElement('POINT(%s %s)' % (pt[0], pt[1]))
-            node = Node(geom, 1, node_type, self)
+            shp = shapely.geometry.Point(pt[0], pt[1])
+            wkb_geom = from_shape(shp, srid=BASE_SRID)
+            node = Node(wkb_geom, 1, node_type, self)
             new_nodes.append(node)
 
         session.add_all(new_nodes)
         
 
-    def locate_supply_nodes(self, distance, num_supply_nodes):
+    def locate_supply_nodes(self, distance, num_supply_nodes, session):
         """
         locate num_supply_nodes that cover the demand within
         distance from those supply_nodes.
         """
         nodes = self.get_demand_nodes_outside_distance(distance).all()
-        pts = get_coords(nodes)
+        pts = [to_shape(node.point).coords[0] for node in nodes]
+        # pts = get_coords(nodes)
         km = distance / 1000.0
         from spatial_utils import cluster_r, util
 
@@ -343,13 +342,15 @@ class Phase(Base):
             
         centroids = []
         for cluster in cluster_nodes:
-            pts = get_coords(cluster)
-            unzipped = zip(*pts)
+            cluster_pts = [to_shape(node.point).coords[0] for node in cluster]
+            # pts = get_coords(cluster)
+            unzipped = zip(*cluster_pts)
             pt = util.points_to_centroid(unzipped)
             weights = map(lambda x: x.weight, cluster)
             weight = sum(weights)
-            geom = WKTSpatialElement('POINT(%s %s)' % (pt[0], pt[1]))
-            node = Node(geom, weight, get_node_type('supply'), self)
+            shp = shapely.geometry.Point(pt[0], pt[1])
+            wkb_geom = from_shape(shp, srid=BASE_SRID)
+            node = Node(wkb_geom, weight, get_node_type('supply', session), self)
             centroids.append(node)
 
         centroids.sort(key=lambda x: x.weight, reverse=True)
@@ -401,15 +402,15 @@ class PhaseAncestor(Base):
 class Node(Base):
 
     __tablename__ = 'nodes'
-    __table_args__ = {'autoload': True}
+    # __table_args__ = {'autoload': True}
 
-    point = GeometryColumn(
-            Point(dimension=2, spatial_index=True)
-            )
-
-    node_type = relationship("NodeType")
-    
-    scenario = relationship(Scenario)
+    id = Column(Integer, primary_key=True)
+    point = Column(Geometry(geometry_type='POINT', srid=BASE_SRID))
+    weight = Column(Integer)
+    node_type_id = Column(Integer, ForeignKey('nodetypes.id'))
+    phase_id = Column(Integer, ForeignKey('phases.id'))
+    scenario_id = Column(Integer, ForeignKey('scenarios.id'))
+    node_type = relationship(NodeType)
     phase = relationship(Phase)
 
     def __init__(self, point, weight, node_type, phase):
@@ -417,10 +418,12 @@ class Node(Base):
         self.weight = weight
         self.node_type = node_type
         self.phase = phase 
+        self.scenario_id = phase.scenario.id
 
     def to_geojson(self):
-        from shapely.wkb import loads
-        point = loads(str(self.point.geom_wkb))
+        # from shapely.wkb import loads
+        # point = loads(str(self.point.geom_wkb))
+        point = to_shape(self.point)
         return {'type': 'Feature',
                 'geometry':
                 {'type': point.type,
@@ -446,7 +449,9 @@ class Edge(Base):
 def get_cumulative_nodes(scenario_id, phase_id, cls_or_fun=Node, node_type=None):
     session = DBSession()
     q = session.query(cls_or_fun).\
-            join(Phase).\
+            join(Phase, 
+                    (Phase.scenario_id == Node.scenario_id) &
+                    (Phase.id == Node.phase_id)).\
             join(PhaseAncestor,
                  (Phase.id == PhaseAncestor.ancestor_phase_id) &\
                  (Phase.scenario_id == PhaseAncestor.scenario_id)).\
@@ -471,5 +476,3 @@ def get_coords(nodes):
 
     coord_fun = get_coord_fun(DBSession)
     return map(coord_fun, nodes)
-
-GeometryDDL(Node.__table__)

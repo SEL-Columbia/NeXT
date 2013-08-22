@@ -2,7 +2,7 @@ import logging
 from paste.script.command import Command
 from pyramid.paster import bootstrap
 from sqlalchemy import engine_from_config
-from next import initialize_sql
+from next import initialize_base, initialize_session
 
 
 logger = logging.getLogger(__name__)
@@ -46,7 +46,7 @@ class ImportFixtures(Command):
         except:
             pass
 
-        initialize_sql(engine)
+        initialize_base(engine)
 
         from next.model.models import Base
 
@@ -84,7 +84,7 @@ class ExportFixtures(Command):
         config_uri = self.args[0]
         env = bootstrap(config_uri)
         engine = engine_from_config(env['registry'].settings, 'sqlalchemy.')
-        initialize_sql(engine)
+        initialize_base(engine)
 
         tables = Base.metadata.sorted_tables
         assert self.args[1] is not None, 'You should provide a output file'

@@ -1,74 +1,116 @@
 import unittest
 #from pyramid.config import Configurator
 from pyramid import testing
-from geoalchemy import WKTSpatialElement
+from sqlalchemy import func
+from geoalchemy2.shape import to_shape, from_shape
+from shapely.geometry import Point, Polygon
 import simplejson
+from next.model import DBSession
 
 def _initTestingDB():
+    """
+    Perform init configuration of SQLAlchemy Base object and
+    the DBSession session manager
+    """
     from sqlalchemy import create_engine
-    from next.model import initialize_sql
-    from next.model import DBSession
-    initialize_sql(
-        create_engine('postgresql://next@localhost/next_testing')
-    )
-    return DBSession()
+    from next.model import initialize_base, initialize_session
+    engine = create_engine('postgresql://next@localhost/next_testing')
+    initialize_base(engine)
+    initialize_session(engine)
 
 def _initTestData(session):
-    # Initialize Scenario with 2 demand nodes and 2 supply_nodes
-    # Assumes Reference Data (i.e. NodeTypes) are loaded
-    
-    from next.model.models import Scenario, Phase, Node, get_node_type
+    """
+    Initialize Test Scenario with 2 demand nodes and 2 supply_nodes
+    Assumes Reference Data (i.e. NodeTypes) are loaded
+    """ 
+    from next.model.models import Scenario, Phase, Node, get_node_type, BASE_SRID
     scenario = Scenario("Test")
     session.add(scenario)
-    session.flush()
     phase1 = Phase(scenario)
-    session.flush()
     # add a 2nd phase to test against
     phase2 = Phase(scenario, phase1)
-    session.flush()
+    session.add_all([phase1, phase2])
 
     supply1 = Node(
-               WKTSpatialElement('POINT (0 0)'),
+               from_shape(Point(0, 0), srid=BASE_SRID),
                1,
-               get_node_type('supply'), 
+               get_node_type('supply', session), 
                phase1
            )
 
     supply2 = Node(
-               WKTSpatialElement('POINT (-1 -1)'),
+               from_shape(Point(-1, -1), srid=BASE_SRID),
                1,
-               get_node_type('supply'), 
+               get_node_type('supply', session), 
                phase1
            )
 
-    hh1  = Node(
-               WKTSpatialElement('POINT (1 1)'),
+    demand1  = Node(
+               from_shape(Point(1, 1), srid=BASE_SRID),
                1,
-               get_node_type('demand'), 
+               get_node_type('demand', session), 
                phase1
            )
 
-    # hh2 is added to phase2
-    hh2  = Node(
-               WKTSpatialElement('POINT (-2 -2)'),
+    # demand2 is added to phase2
+    demand2  = Node(
+               from_shape(Point(-2, -2), srid=BASE_SRID),
                1,
-               get_node_type('demand'), 
+               get_node_type('demand', session), 
                phase2
            )
 
     session.add(supply1)
     session.add(supply2)
-    session.add(hh1)
-    session.add(hh2)
+    session.add(demand1)
+    session.add(demand2)
     session.flush()
     
+
+def _tearDownTestData(session):
+    """"
+    Delete all DB entities
+    """
+    from next.model.models import Edge, Node, Phase, PhaseAncestor, Scenario
+    session.query(Edge).delete()
+    session.query(Node).delete()
+    session.query(PhaseAncestor).delete()
+    session.query(Phase).delete()
+    session.query(Scenario).delete()
+    session.flush()
+    session.close()
+
+def setUpModule():
+    # runs once for all unittests in the module
+    _initTestingDB()
+
+
+def nodes_along_latitude(num_nodes, phase, session, node_type='demand', weight=1, y_val=0.0, x_origin=0.0, x_spacing=1.0):
+    """
+    Create num_node next.model.models.Node objects along a horizontal line
+    at y_val spaced evenly at x_spacing intervals starting from x_origin
+    """
+    from next.model.models import Node, get_node_type, BASE_SRID
+    nodes = []
+    for i in range(num_nodes):
+        x_val = x_origin + i*x_spacing
+        node = Node(
+                from_shape(Point(x_val, y_val), srid=BASE_SRID),
+                weight, 
+                get_node_type(node_type, session),
+                phase
+               )
+        nodes.append(node)
+                
+    return nodes
+
 
 class TestMyView(unittest.TestCase):
     def setUp(self):
         self.config = testing.setUp()
-        self.session = _initTestingDB()
-        self.connection = self.session.connection()
-        self.trans = self.connection.begin()
+        self.session = DBSession()
+        # self.connection = self.session.connection()
+        # self.trans = self.connection.begin()
         # many of the views call show-phase
         # Not sure why __init__ is not called
         # to load all of the routes
@@ -76,9 +118,10 @@ class TestMyView(unittest.TestCase):
         _initTestData(self.session)
 
     def tearDown(self):
-        self.trans.rollback()
+        # self.trans.rollback()
         # self.session.rollback()
-        self.session.close()
+        # delete all nodes, phases, scenarios
+        _tearDownTestData(self.session)
         testing.tearDown()
 
     def helper_get_phase_nodes(self, scenario_id, phase_id, node_type=None):
@@ -100,18 +143,18 @@ class TestMyView(unittest.TestCase):
         self.assertTrue(isinstance(response, dict))
 
     def test_bounds(self):
-        from next.model.models import Scenario
+        from next.model.models import Scenario, Node
         from next.views import show_phases
-        from shapely.geometry import Polygon
         request = testing.DummyRequest()
         sc1 = self.session.query(Scenario).filter(Scenario.name == "Test").first()
-        test_bounds = Polygon([(-2, -2), (1, -2), (1, 1), (-2, 1), (-2, -2)])        
+        nodes = self.session.query(Node).filter(Node.scenario_id == sc1.id).all()
+        bounds = Polygon([(-2, -2), (1, -2), (1, 1), (-2, 1), (-2, -2)])        
         actual_bounds = sc1.get_bounds(srid=4326)
-        self.assertTrue(test_bounds.equals(actual_bounds))
+        self.assertTrue(bounds.equals(actual_bounds))
         phase1 = sc1.phases[0]
-        test_bounds = Polygon([(-1, -1), (1, -1), (1, 1), (-1, 1), (-1, -1)])        
+        bounds = Polygon([(-1, -1), (1, -1), (1, 1), (-1, 1), (-1, -1)])        
         actual_bounds = phase1.get_bounds(srid=4326)
-        self.assertTrue(test_bounds.equals(actual_bounds))
+        self.assertTrue(bounds.equals(actual_bounds))
 
     def test_show_all(self):
         from next.views import show_all
@@ -156,7 +199,6 @@ class TestMyView(unittest.TestCase):
         from next.views import create_scenario
         import StringIO
         import cgi
-        dbapi_conn = self.session.connection().connection
 
         supply_csv = "0.0,0.0"
         demand_csv = "1.0,1.0\n-1.0,-1.0"
@@ -193,6 +235,10 @@ class TestMyView(unittest.TestCase):
 
 
     def test_create_edges(self):
+        """
+        Test whether demands are associated with the appropriate supply nodes
+        based on proximity
+        """
         from next.model.models import Scenario, Node, Edge
         from next.views import create_edges
         sc1 = self.session.query(Scenario).filter(Scenario.name == "Test").first()
@@ -200,20 +246,19 @@ class TestMyView(unittest.TestCase):
         request = testing.DummyRequest()
         request.matchdict = params
         response = create_edges(request)
-        # ensure that hh's are assoc'd with correct supply's
-        hh1 = self.session.query(Node).filter(Node.point.x == 1.0).first()
-        hh2 = self.session.query(Node).filter(Node.point.x == -2.0).first()
+        demand1 = self.session.query(Node).filter(func.ST_X(Node.point) == 1.0).first()
+        demand2 = self.session.query(Node).filter(func.ST_X(Node.point) == -2.0).first()
 
         supply1 = self.session.query(Node).\
           filter(Edge.to_node_id == Node.id).\
-          filter(Edge.from_node_id == hh1.id).first()
+          filter(Edge.from_node_id == demand1.id).first()
        
         supply2 = self.session.query(Node).\
           filter(Edge.to_node_id == Node.id).\
-          filter(Edge.from_node_id == hh2.id).first()
+          filter(Edge.from_node_id == demand2.id).first()
         
-        supply1_coords = supply1.point.coords(self.session)
-        supply2_coords = supply2.point.coords(self.session)
+        supply1_coords = to_shape(supply1.point).coords[0] #(self.session)
+        supply2_coords = to_shape(supply2.point).coords[0] #(self.session)
         self.assertTrue(supply1_coords[0] == 0.0 and supply1_coords[1] == 0.0)
         self.assertTrue(supply2_coords[0] == -1.0 and supply2_coords[1] == -1.0)
 
@@ -353,14 +398,35 @@ class TestMyView(unittest.TestCase):
         self.assertEqual(6, len(nodes['features']))
 
 
+    def test_node_counts(self):
+        """
+        Add 2 scenarios with varying #'s of nodes and
+        ensure that they have the correct counts
+        """
+        from next.model.models import Scenario, Phase, get_cumulative_nodes
+        scen1 = Scenario(u'scenario1')
+        scen2 = Scenario(u'scenario2')
+        phase1 = Phase(scen1)
+        phase2 = Phase(scen2)
+
+        self.session.add_all([scen1, scen2, phase1, phase2])
+        scen1_nodes = nodes_along_latitude(10, phase1, self.session)
+        self.session.add_all(scen1_nodes)
+        scen2_nodes = nodes_along_latitude(20, phase2, self.session)
+        self.session.add_all(scen2_nodes)
+
+        self.assertEqual(10, get_cumulative_nodes(scen1.id, phase1.id).count()) 
+        self.assertEqual(20, get_cumulative_nodes(scen2.id, phase2.id).count()) 
+
+        
+
 class TestDatabase(unittest.TestCase):
     def setUp(self):
         self.config = testing.setUp()
-        self.session = _initTestingDB()
+        self.session = DBSession()
 
     def tearDown(self):
-        self.session.rollback()
-        self.session.close()
+        _tearDownTestData(self.session)
         testing.tearDown()
 
     def _get_scenario(self):
@@ -376,10 +442,10 @@ class TestDatabase(unittest.TestCase):
         return NodeType(u'demand')
 
     def _get_node(self):
-        from next.model.models import Node
-        from geoalchemy import WKTSpatialElement
+        from next.model.models import Node, BASE_SRID
+        wkb_point = from_shape(Point(1, 1), srid=BASE_SRID)
         return Node(
-            WKTSpatialElement('POINT (1 1)'),
+            wkb_point,
             100,
             self._get_node_type(),
             self._get_phase(),

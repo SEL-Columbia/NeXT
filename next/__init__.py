@@ -1,13 +1,14 @@
 from pyramid.config import Configurator
 from sqlalchemy import engine_from_config
-from next.model import initialize_sql
+from next.model import initialize_base, initialize_session
 
 def main(global_config, **settings):
     """ This function returns a Pyramid WSGI application.
     """
 
     engine = engine_from_config(settings, 'sqlalchemy.')
-    initialize_sql(engine)
+    initialize_base(engine)
+    initialize_session(engine)
 
     config = Configurator(settings=settings)
 

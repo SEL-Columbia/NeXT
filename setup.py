@@ -16,7 +16,7 @@ requires = [
     'numpy',
     'rpy2',
     'Shapely',
-    'geoalchemy',
+    'geoalchemy2',
     'colander',
     'SQLAlchemy',
     'transaction',

@@ -12,7 +12,6 @@ from pyramid.view import view_config
 from pyramid.httpexceptions import HTTPFound
 from pyramid.httpexceptions import HTTPForbidden
 
-from geoalchemy import WKTSpatialElement
 from sqlalchemy.sql import text
 
 from next.model.models import Scenario
@@ -21,17 +20,19 @@ from next.model.models import PhaseAncestor
 from next.model.models import Node
 from next.model.models import Edge
 from next.model.models import NodeType
+from next.model.models import BASE_SRID
 from next.model.models import DBSession
 from next.model.models import get_node_type
 from next.model.models import get_cumulative_nodes
 from next.import_helpers import import_nodes
+import shapely
+from geoalchemy2.shape import to_shape, from_shape
 from spatial_utils import pg_import
 
 logger = logging.getLogger(__name__)
 
 # Utility functions
-def get_object_or_404(cls, request, id_fields=('id',)):
-    session = DBSession()
+def get_object_or_404(cls, request, session, id_fields=('id',)):
     id_vals = [request.matchdict.get(id_fld, None) for id_fld in id_fields]
     # import pdb; pdb.set_trace()
     if id_vals is None:
@@ -41,7 +42,7 @@ def get_object_or_404(cls, request, id_fields=('id',)):
     if obj is not None:
         return obj
     else:
-        raise HTTPNotFound('Unable to locate class:%s' % cls)
+        raise HTTPNotFound('Unable to locate class:%s with ids:%s' % (cls, id_vals))
 
 
 def to_geojson_feature_collection(features):
@@ -103,7 +104,8 @@ def show_all(request):
 
 @view_config(route_name='phases', request_method='GET')
 def show_phases(request):
-    scenario = get_object_or_404(Scenario, request, ('id',))
+    session = DBSession()
+    scenario = get_object_or_404(Scenario, request, session, ('id',))
     return json_response({'type': 'FeatureCollection',
                           'features': scenario.get_phases_geojson()})
 
@@ -124,8 +126,8 @@ def create_scenario(request):
         dbapi_conn = session.connection().connection
         sc = phase = None
         try:
-            demand_type = get_node_type('demand')
-            supply_type = get_node_type('supply')
+            demand_type = get_node_type('demand', session)
+            supply_type = get_node_type('supply', session)
     
             name = request.POST['name']
             # make sure that we have a name
@@ -189,7 +191,8 @@ def create_phase(request):
     TODO:  Is this needed?  Should we ONLY create phases upon adding nodes?
     """
             
-    parent = get_object_or_404(Phase, request, ('phase_id', 'id'))
+    session = DBSession()
+    parent = get_object_or_404(Phase, request, session, ('phase_id', 'id'))
     phase = Phase(parent.scenario, parent)
 
     return HTTPFound(
@@ -200,7 +203,8 @@ def create_phase(request):
 def create_edges(request):
     """ Create the nearest-neighbor edges """
 
-    phase = get_object_or_404(Phase, request, ('phase_id', 'id'))
+    session = DBSession()
+    phase = get_object_or_404(Phase, request, session, ('phase_id', 'id'))
     phase.create_edges()
     # need to do an explicit commit here since no SQLAlchemy
     # objects were written (therefore SQLAlchemy doesn't think it needs to 
@@ -218,7 +222,8 @@ def show_nodes(request):
     If type=='demand', then add nearest-neighbor distance to output
     """
 
-    scenario = get_object_or_404(Scenario, request)
+    session = DBSession()
+    scenario = get_object_or_404(Scenario, request, session)
     nodes = []
     if (request.GET.has_key("type")):
         request_node_type = request.GET["type"]
@@ -226,7 +231,7 @@ def show_nodes(request):
             return show_demand_json(scenario)
         else: 
             nodes = scenario.get_nodes().\
-                filter_by(node_type=get_node_type(request_node_type))
+                filter_by(node_type=get_node_type(request_node_type, session))
     else:
         nodes = scenario.get_nodes()
 
@@ -242,7 +247,7 @@ def show_phase_nodes(request):
     """
 
     session = DBSession()
-    phase = get_object_or_404(Phase, request, ('phase_id', 'id'))
+    phase = get_object_or_404(Phase, request, session, ('phase_id', 'id'))
     nodes = []
     if (request.GET.has_key("type")):
         request_node_type = request.GET["type"]
@@ -324,13 +329,15 @@ def show_phase_demand_json(phase):
 
 @view_config(route_name='graph-phase')
 def graph_phase(request):
-    phase = get_object_or_404(Phase, request, ('phase_id', 'id'))
+    session = DBSession()
+    phase = get_object_or_404(Phase, request, session, ('phase_id', 'id'))
     return json_response(map(list, phase.get_demand_vs_distance(num_partitions=20)))
 
 
 @view_config(route_name='graph-phase-cumul')
 def graph_phase_cumul(request):
-    phase = get_object_or_404(Phase, request, ('phase_id', 'id'))
+    session = DBSession()
+    phase = get_object_or_404(Phase, request, session, ('phase_id', 'id'))
     return json_response(map(list, 
         phase.get_partitioned_demand_vs_dist(num_partitions=100)))
 
@@ -339,8 +346,9 @@ def graph_phase_cumul(request):
 def show_phase(request):
     """
     """
-    scenario = get_object_or_404(Scenario, request)
-    phase = get_object_or_404(Phase, request, ('phase_id', 'id'))
+    session = DBSession()
+    scenario = get_object_or_404(Scenario, request, session)
+    phase = get_object_or_404(Phase, request, session, ('phase_id', 'id'))
     phase_tree = scenario.get_phases_tree()
     tree_rows = to_tree_rows(phase_tree)
     return {'phase': phase,
@@ -350,7 +358,8 @@ def show_phase(request):
 
 @view_config(route_name='find-demand-within')
 def find_demand_with(request):
-    phase = get_object_or_404(Phase, request, ('phase_id', 'id'))
+    session = DBSession()
+    phase = get_object_or_404(Phase, request, session, ('phase_id', 'id'))
     distance = request.json_body.get('d', 1000)
     return json_response(
         {'total': phase.get_percent_within(distance)}
@@ -365,14 +374,14 @@ def create_supply_nodes(request):
     Display the new output
     """
     session = DBSession()
-    phase = get_object_or_404(Phase, request, ('phase_id', 'id'))
+    phase = get_object_or_404(Phase, request, session, ('phase_id', 'id'))
     child_phase = Phase(phase.scenario, phase)
     session.add(child_phase)
     session.flush() #flush this so object has all id's
     distance = float(request.json_body.get('d', 1000))
     num_supply_nodes = int(request.json_body.get('n', 1))
 
-    centroids = child_phase.locate_supply_nodes(distance, num_supply_nodes)
+    centroids = child_phase.locate_supply_nodes(distance, num_supply_nodes, session)
     session.add_all(centroids)
 
     # need to flush so that create_edges knows about new nodes
@@ -392,19 +401,18 @@ def add_nodes(request):
     Add nodes to a new child phase
     """
     session = DBSession()
-    phase = get_object_or_404(Phase, request, ('phase_id', 'id'))
+    phase = get_object_or_404(Phase, request, session, ('phase_id', 'id'))
     child_phase = Phase(phase.scenario, phase)
     new_nodes = []
     for feature in request.json_body['features']:
         # assumes point geom
         coords = feature['geometry']['coordinates']
-        geom = WKTSpatialElement(
-            'POINT(%s %s)' % (coords[0], coords[1])
-            )
+        shp_pt = shapely.geometry.Point(coords[0], coords[1])
+        wkb_geom = from_shape(shp_pt, srid=BASE_SRID)
         type_property = feature['properties']['type']
         weight = feature['properties']['weight']
-        node_type = get_node_type(type_property)
-        node = Node(geom, weight, node_type, child_phase)
+        node_type = get_node_type(type_property, session)
+        node = Node(wkb_geom, weight, node_type, child_phase)
         new_nodes.append(node)
     session.add_all(new_nodes)
     session.flush()
