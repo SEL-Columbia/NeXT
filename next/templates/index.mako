@@ -27,7 +27,7 @@
         <tr>
           <td>${scenario.id}</td>
           <td>             
-            <a href="${request.route_url('show-phase',id=scenario.id, phase_id=1)}">${scenario}</a>
+            <a href="${request.route_url('show-phase',id=scenario.id, phase_id=1)}">${scenario.name}</a>
           </td>
           <td>
             ${get_cumulative_nodes(scenario.id, 1).count()}

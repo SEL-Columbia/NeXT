@@ -463,16 +463,3 @@ def get_cumulative_nodes(scenario_id, phase_id, cls_or_fun=Node, node_type=None)
 
     return q
 
-
-def get_coords(nodes):
-    """ 
-    Get array of coordinates from the list of nodes
-    """
-    
-    #Not sure why lambda function from within map scope
-    #cannot see session.  This inner function is a workaround.
-    def get_coord_fun(sesh):
-        return lambda pt_node: pt_node.point.coords(sesh)
-
-    coord_fun = get_coord_fun(DBSession)
-    return map(coord_fun, nodes)
