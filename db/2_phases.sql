@@ -1,19 +1,18 @@
--- phase id trigger
+-- phase id trigger functions (triggers themselves in separate file for now)
 -- Needs to be created prior to adding root phases to
 -- existing scenarios and relating Nodes/Edges to them
 -- Ensure that phase id is set appropriately by default
-CREATE FUNCTION tgr_phase_id() RETURNS TRIGGER AS $$
+CREATE OR REPLACE FUNCTION tgr_phase_id() RETURNS TRIGGER AS $$
     BEGIN
         IF TG_OP = 'INSERT' THEN
             -- Set ID to (count of all phases for THIS scenario) + 1
-            NEW.id := count(*)+1 from phases where scenario_id=NEW.scenario_id;
+            NEW.id := max(id)+1 from phases where scenario_id=NEW.scenario_id;
         END IF;
         RETURN NEW;
     END;
-$$ LANGUAGE plpgsql;
+$$ 
+LANGUAGE plpgsql;
 
-CREATE TRIGGER tgr_phase_id BEFORE INSERT ON phases
-    FOR EACH ROW EXECUTE PROCEDURE tgr_phase_id();
 
 -- Get entire branch of phases from "this" phase to root
 -- Created PRIOR to phase_ancestor trigger which depends on this
@@ -36,7 +35,7 @@ LANGUAGE SQL;
 
 -- Ensure that phase_ancestors are updated each time we add a phase
 -- (phases are only inserted/deleted, never updated)
-CREATE FUNCTION tgr_phase_ancestors_add() RETURNS TRIGGER AS $$
+CREATE OR REPLACE FUNCTION tgr_phase_ancestors_add() RETURNS TRIGGER AS $$
     BEGIN
         IF TG_OP = 'INSERT' THEN
             -- Populate phase_ancestors with branch of phases
@@ -49,6 +48,3 @@ CREATE FUNCTION tgr_phase_ancestors_add() RETURNS TRIGGER AS $$
     END;
 $$ 
 LANGUAGE plpgsql;
-
-CREATE TRIGGER tgr_phase_ancestors_add AFTER INSERT ON phases
-    FOR EACH ROW EXECUTE PROCEDURE tgr_phase_ancestors_add();
