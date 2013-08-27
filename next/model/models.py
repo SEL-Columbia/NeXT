@@ -463,3 +463,14 @@ def get_cumulative_nodes(scenario_id, phase_id, cls_or_fun=Node, node_type=None)
 
     return q
 
+def get_nodes(scenario_id, phase_id, cls_or_fun=Node, node_type=None):
+    session = DBSession()
+    q = session.query(cls_or_fun).\
+            filter((Node.scenario_id == scenario_id) &\
+                   (Node.phase_id == phase_id))
+
+    if(node_type):
+        q = q.join(NodeType).filter(NodeType.name == node_type)
+
+    return q
+
