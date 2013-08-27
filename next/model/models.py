@@ -161,7 +161,12 @@ class Phase(Base):
         self.scenario = scenario
         self.parent = parent
         self.name = name
-        
+
+    def is_root(self):
+        """
+        True if this phase is the root phase of a scenario
+        """
+        return (self.id == 1)
 
     def get_bounds(self, srid=900913):
         """
@@ -375,13 +380,15 @@ class PhaseAncestor(Base):
 
     1        The table representation would be:
     \        phase_id|phase_ancestor_id
-     2              1|-
+     2              1|1
       \             2|1
-       3            3|2
+       3            2|2
     \               3|1
-     4              4|1
+     4              3|2
+                    3|3
+                    4|1
 
-     Note that phase 3 references both phase 1 AND phase 1.  
+     Note that phase 3 references both phase 2 AND phase 1.  
      This allows for simplified, non-recursive joins.  
 
      To accomodate this, there's a trigger defined on the phase table

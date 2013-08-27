@@ -20,6 +20,7 @@ def main(global_config, **settings):
 
     config.add_route('show-scenario', '/scenarios/{id}')
     config.add_route('create-phase', '/scenarios/{id}/phases/{phase_id}/create')
+    config.add_route('remove-phase', '/scenarios/{id}/phases/{phase_id}/remove')
     config.add_route('show-phase', '/scenarios/{id}/phases/{phase_id}')
     config.add_route('phases', '/scenarios/{id}/phases')
     config.add_route('nodes', '/scenarios/{id}/nodes')

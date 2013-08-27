@@ -11,7 +11,9 @@ from pyramid.httpexceptions import HTTPNotFound
 from pyramid.view import view_config
 from pyramid.httpexceptions import HTTPFound
 from pyramid.httpexceptions import HTTPForbidden
+from pyramid.httpexceptions import HTTPBadRequest
 
+from sqlalchemy import func
 from sqlalchemy.sql import text
 
 from next.model.models import Scenario
@@ -495,3 +497,48 @@ def remove_scenario(request):
 
     return HTTPFound(location=request.route_url('index'))
 
+@view_config(route_name='remove-phase')
+def remove_phase(request):
+    """
+    Remove a phase and all its descendents
+    """
+    session = DBSession()
+    phase = get_object_or_404(Phase, request, ('phase_id', 'id'))
+
+    if phase.is_root():
+        raise HTTPBadRequest('Unable to remove a root phase, remove the scenario instead')
+
+    # get all phases that descend from this phase
+    phases = session.query(Phase).filter(
+            (Phase.scenario_id == phase.scenario_id) &
+            (Phase.id == PhaseAncestor.phase_id) &
+            (PhaseAncestor.ancestor_phase_id == phase.id) &
+            (PhaseAncestor.scenario_id == phase.scenario_id)).distinct().\
+                    order_by(Phase.id.desc())
+
+    # needed for referring to parent phase upon return
+    scenario_id  = phase.scenario_id
+    # get the phase_id of the parent if it exists
+    parent_phase_id = session.query(func.max(PhaseAncestor.ancestor_phase_id)).filter(
+            (PhaseAncestor.scenario_id == phase.scenario_id) & 
+            (PhaseAncestor.phase_id == phase.id) & 
+            (PhaseAncestor.ancestor_phase_id < phase.id)).one()[0]
+ 
+
+    # may want to push this down into Phase object later
+    for p in phases:
+        session.query(Edge).filter(
+                (Edge.scenario_id==p.scenario_id) & 
+                (Edge.phase_id==p.id)).delete()
+        session.query(Node).filter(
+                (Node.scenario_id==p.scenario_id) & 
+                (Node.phase_id==p.id)).delete()
+        session.query(PhaseAncestor).filter(
+                (PhaseAncestor.scenario_id==p.scenario_id) & 
+                (PhaseAncestor.phase_id==p.id)).delete()
+        session.query(Phase).filter(
+                (Phase.scenario_id==p.scenario_id) & 
+                (Phase.id==p.id)).delete()
+        
+    return HTTPFound(location=request.route_url(
+        'show-phase', id=scenario_id, phase_id=parent_phase_id))
