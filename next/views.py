@@ -23,7 +23,7 @@ from next.model.models import NodeType
 from next.model.models import BASE_SRID
 from next.model.models import DBSession
 from next.model.models import get_node_type
-from next.model.models import get_cumulative_nodes
+from next.model.models import get_cumulative_nodes, get_nodes
 from next.import_helpers import import_nodes
 import shapely
 from geoalchemy2.shape import to_shape, from_shape
@@ -32,7 +32,8 @@ from spatial_utils import pg_import
 logger = logging.getLogger(__name__)
 
 # Utility functions
-def get_object_or_404(cls, request, session, id_fields=('id',)):
+def get_object_or_404(cls, request, id_fields=('id',)):
+    session = DBSession()
     id_vals = [request.matchdict.get(id_fld, None) for id_fld in id_fields]
     # import pdb; pdb.set_trace()
     if id_vals is None:
@@ -105,7 +106,7 @@ def show_all(request):
 @view_config(route_name='phases', request_method='GET')
 def show_phases(request):
     session = DBSession()
-    scenario = get_object_or_404(Scenario, request, session, ('id',))
+    scenario = get_object_or_404(Scenario, request, ('id',))
     return json_response({'type': 'FeatureCollection',
                           'features': scenario.get_phases_geojson()})
 
@@ -192,7 +193,7 @@ def create_phase(request):
     """
             
     session = DBSession()
-    parent = get_object_or_404(Phase, request, session, ('phase_id', 'id'))
+    parent = get_object_or_404(Phase, request, ('phase_id', 'id'))
     phase = Phase(parent.scenario, parent)
 
     return HTTPFound(
@@ -204,7 +205,7 @@ def create_edges(request):
     """ Create the nearest-neighbor edges """
 
     session = DBSession()
-    phase = get_object_or_404(Phase, request, session, ('phase_id', 'id'))
+    phase = get_object_or_404(Phase, request, ('phase_id', 'id'))
     phase.create_edges()
     # need to do an explicit commit here since no SQLAlchemy
     # objects were written (therefore SQLAlchemy doesn't think it needs to 
@@ -223,7 +224,7 @@ def show_nodes(request):
     """
 
     session = DBSession()
-    scenario = get_object_or_404(Scenario, request, session)
+    scenario = get_object_or_404(Scenario, request)
     nodes = []
     if (request.GET.has_key("type")):
         request_node_type = request.GET["type"]
@@ -246,13 +247,35 @@ def show_phase_nodes(request):
     If type=='demand', then add nearest-neighbor distance to output
     """
 
-    session = DBSession()
-    phase = get_object_or_404(Phase, request, session, ('phase_id', 'id'))
+    phase = get_object_or_404(Phase, request, ('phase_id', 'id'))
     nodes = []
     if (request.GET.has_key("type")):
         request_node_type = request.GET["type"]
         if(request_node_type == "demand"):
             return show_phase_demand_json(phase)
+        else: 
+            nodes = get_nodes(phase.scenario_id, phase.id, node_type=request_node_type)
+    else:
+        nodes = get_nodes(phase.scenario_id, phase.id)
+
+    return to_geojson_feature_collection(nodes)
+
+
+@view_config(route_name='cumulative-phase-nodes', request_method='GET')
+def show_cumulative_phase_nodes(request):
+    """ 
+    Returns nodes as geojson
+    type parameter used as a filter
+    If type=='demand', then add nearest-neighbor distance to output
+    """
+
+    session = DBSession()
+    phase = get_object_or_404(Phase, request, ('phase_id', 'id'))
+    nodes = []
+    if (request.GET.has_key("type")):
+        request_node_type = request.GET["type"]
+        if(request_node_type == "demand"):
+            return show_cumulative_phase_demand_json(phase)
         else: 
             nodes = get_cumulative_nodes(phase.scenario_id, phase.id, node_type=request_node_type)
     else:
@@ -292,8 +315,42 @@ def show_demand_json(scenario):
     ]
     return json_response({'type': 'FeatureCollection', 'features': feats })
 
-
 def show_phase_demand_json(phase):
+    session = DBSession()
+    conn = session.connection()
+    sql = text('''
+    select nodes.id,
+    nodetypes.name,
+    nodes.weight,
+    st_asgeojson(nodes.point),
+    edges.distance 
+    from nodes, edges, nodetypes, phase_ancestors
+    where nodes.scenario_id = :sc_id and
+    nodes.phase_id = :ph_id
+    edges.scenario_id = :sc_id and
+    edges.phase_id = :ph_id and
+    nodes.id = edges.from_node_id and
+    nodes.node_type_id = nodetypes.id and
+    nodetypes.name='demand'
+    ''')
+    rset = conn.execute(sql, sc_id=phase.scenario_id, ph_id=phase.id).fetchall()
+    feats = [
+        {
+        'type': 'Feature',
+        'geometry': simplejson.loads(feat[3]),
+        'properties': {
+            'id':feat[0],
+            'type':feat[1],
+            'weight':feat[2],
+            'distance': feat[4]
+            }
+        } for feat in rset
+    ]
+    return json_response({'type': 'FeatureCollection', 'features': feats })
+
+
+
+def show_cumulative_phase_demand_json(phase):
     session = DBSession()
     conn = session.connection()
     sql = text('''
@@ -330,14 +387,14 @@ def show_phase_demand_json(phase):
 @view_config(route_name='graph-phase')
 def graph_phase(request):
     session = DBSession()
-    phase = get_object_or_404(Phase, request, session, ('phase_id', 'id'))
+    phase = get_object_or_404(Phase, request, ('phase_id', 'id'))
     return json_response(map(list, phase.get_demand_vs_distance(num_partitions=20)))
 
 
 @view_config(route_name='graph-phase-cumul')
 def graph_phase_cumul(request):
     session = DBSession()
-    phase = get_object_or_404(Phase, request, session, ('phase_id', 'id'))
+    phase = get_object_or_404(Phase, request, ('phase_id', 'id'))
     return json_response(map(list, 
         phase.get_partitioned_demand_vs_dist(num_partitions=100)))
 
@@ -347,8 +404,8 @@ def show_phase(request):
     """
     """
     session = DBSession()
-    scenario = get_object_or_404(Scenario, request, session)
-    phase = get_object_or_404(Phase, request, session, ('phase_id', 'id'))
+    scenario = get_object_or_404(Scenario, request)
+    phase = get_object_or_404(Phase, request, ('phase_id', 'id'))
     phase_tree = scenario.get_phases_tree()
     tree_rows = to_tree_rows(phase_tree)
     return {'phase': phase,
@@ -359,7 +416,7 @@ def show_phase(request):
 @view_config(route_name='find-demand-within')
 def find_demand_with(request):
     session = DBSession()
-    phase = get_object_or_404(Phase, request, session, ('phase_id', 'id'))
+    phase = get_object_or_404(Phase, request, ('phase_id', 'id'))
     distance = request.json_body.get('d', 1000)
     return json_response(
         {'total': phase.get_percent_within(distance)}
@@ -374,7 +431,7 @@ def create_supply_nodes(request):
     Display the new output
     """
     session = DBSession()
-    phase = get_object_or_404(Phase, request, session, ('phase_id', 'id'))
+    phase = get_object_or_404(Phase, request, ('phase_id', 'id'))
     child_phase = Phase(phase.scenario, phase)
     session.add(child_phase)
     session.flush() #flush this so object has all id's
@@ -401,7 +458,7 @@ def add_nodes(request):
     Add nodes to a new child phase
     """
     session = DBSession()
-    phase = get_object_or_404(Phase, request, session, ('phase_id', 'id'))
+    phase = get_object_or_404(Phase, request, ('phase_id', 'id'))
     child_phase = Phase(phase.scenario, phase)
     new_nodes = []
     for feature in request.json_body['features']:
@@ -437,3 +494,4 @@ def remove_scenario(request):
             session.query(Scenario).filter(Scenario.id==int(sid)).delete()
 
     return HTTPFound(location=request.route_url('index'))
+
