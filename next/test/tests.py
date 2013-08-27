@@ -126,14 +126,14 @@ class TestMyView(unittest.TestCase):
 
     def helper_get_phase_nodes(self, scenario_id, phase_id, node_type=None):
         " Helper to get nodes of type from scenario "
-        from next.views import show_phase_nodes
+        from next.views import show_cumulative_phase_nodes
         request = testing.DummyRequest()
         params = {'id': scenario_id, 'phase_id': phase_id}
         if (node_type):
             request.GET = {'type': node_type}
             
         request.matchdict = params
-        response = show_phase_nodes(request)
+        response = show_cumulative_phase_nodes(request)
         return simplejson.loads(response.body)
 
     def test_index(self):
@@ -266,13 +266,13 @@ class TestMyView(unittest.TestCase):
 
     def test_show_phase_nodes(self):
         from next.model.models import Scenario
-        from next.views import show_phase_nodes, create_edges
+        from next.views import show_cumulative_phase_nodes, create_edges
         sc1 = self.session.query(Scenario).filter(Scenario.name == "Test").first()
         params = {'id': sc1.id, 'phase_id': 2}
         #test getting all nodes
         request = testing.DummyRequest()
         request.matchdict = params
-        response = show_phase_nodes(request)
+        response = show_cumulative_phase_nodes(request)
         feature_coll = simplejson.loads(response.body)
         features = feature_coll['features']
         self.assertEqual(4, len(features))
@@ -283,7 +283,7 @@ class TestMyView(unittest.TestCase):
         get_params = {'type': "demand"}
         request = testing.DummyRequest(params=get_params)
         request.matchdict = params
-        response = show_phase_nodes(request)
+        response = show_cumulative_phase_nodes(request)
         feature_coll = simplejson.loads(response.body)
         features = feature_coll['features']
         self.assertEqual(2, len(features))
