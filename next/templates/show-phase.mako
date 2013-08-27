@@ -73,17 +73,21 @@
 
     $(function() { 
 
-     load_page({'mapDiv': 'scenario-map', 
+     load_page(
+       {'mapDiv': 'scenario-map', 
         'bbox': ${list(phase.get_bounds().bounds)},
-        'demand_url': '${request.route_url('phase-nodes',id=phase.scenario_id,phase_id=phase.id,_query=dict([('type','demand')]))}',
-        'supply_url': '${request.route_url('phase-nodes',id=phase.scenario_id,phase_id=phase.id,_query=dict([('type','supply')]))}',
+        'demand_url': '${request.route_url('cumulative-phase-nodes',id=phase.scenario_id,phase_id=phase.id,_query=dict([('type','demand')]))}',
+        'supply_url': '${request.route_url('cumulative-phase-nodes',id=phase.scenario_id,phase_id=phase.id,_query=dict([('type','supply')]))}',
+        'phase_supply_url': '${request.route_url('phase-nodes',id=phase.scenario_id,phase_id=phase.id,_query=dict([('type','supply')]))}',
         'graph_cumul_url': '${request.route_url('graph-phase-cumul', id=phase.scenario_id, phase_id=phase.id)}',
         ///'graph_density_url': '${request.route_url('graph-phase', id=phase.scenario_id, phase_id=phase.id)}',
         'new_node_url': '${request.route_url('phase-nodes', id=phase.scenario_id, phase_id=phase.id)}',
         'percent_within': '${request.route_url('find-demand-within', id=phase.scenario_id, phase_id=phase.id)}',
         'create_supply_nodes': '${request.route_url('create-supply-nodes', id=phase.scenario_id, phase_id=phase.id)}',
         'scenario': ${phase.scenario_id},
-        'phase': ${phase.id}
+        'phase': ${phase.id},
+        //only add phase_supply if other than phase 1
+        'add_phase_supply': (${phase.id}!=1) 
       });
     });
 

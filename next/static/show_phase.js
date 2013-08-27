@@ -112,7 +112,7 @@ var load_page = function  (options) {
       fillColor: '#ee0f56',
     });
 
-    var supply_nodes = new OpenLayers.Layer.Vector('supply-nodes', { 
+    var supply_nodes = new OpenLayers.Layer.Vector('cumulative-supply-nodes', { 
       strategies: [new OpenLayers.Strategy.Fixed()],
       styleMap: supply_style,
       protocol: new OpenLayers.Protocol.HTTP({
@@ -120,11 +120,29 @@ var load_page = function  (options) {
         format: new OpenLayers.Format.GeoJSON()
       })
     });
-    
+
+    var phase_supply_style = new OpenLayers.Style({
+      pointRadius: 6,
+      fillColor: '#ffee56',
+    });
+
+    var phase_supply_nodes = new OpenLayers.Layer.Vector('phase-supply-nodes', { 
+      strategies: [new OpenLayers.Strategy.Fixed()],
+      styleMap: phase_supply_style,
+      protocol: new OpenLayers.Protocol.HTTP({
+        url: options.phase_supply_url,
+        format: new OpenLayers.Format.GeoJSON()
+      })
+    });
+
     map.addLayer(gsat);
     map.addLayer(gphy);
     map.addLayer(demand_nodes);
     map.addLayer(supply_nodes);
+    map.addLayer(supply_nodes);
+    if (options.add_phase_supply) {
+      map.addLayer(phase_supply_nodes);
+    }
 
 
     var bounds = new OpenLayers.Bounds.fromArray(options.bbox);
