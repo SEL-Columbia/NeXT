@@ -323,7 +323,33 @@ class Phase(Base):
             new_nodes.append(node)
 
         session.add_all(new_nodes)
-        
+
+    def get_descendents_query(self):
+        """
+        Returns a query object representing all phases
+        descending from this phase...
+        NOTE:  *including* this phase
+        """
+        session = DBSession()
+        q = session.query(Phase).filter(
+            (Phase.scenario_id == self.scenario_id) &
+            (Phase.id == PhaseAncestor.phase_id) &
+            (PhaseAncestor.ancestor_phase_id == self.id) &
+            (PhaseAncestor.scenario_id == self.scenario_id))
+        return q
+
+    def get_nodes_query(self):
+        """
+        Returns query for nodes associated only with this phase
+        """
+        return get_nodes(self.scenario_id, self.id)
+ 
+    def get_cumulative_nodes_query(self):
+        """
+        Returns query for nodes associated with this phase
+        AND all of it's ancestor phases
+        """
+        return get_cumulative_nodes(self.scenario_id, self.id)
 
     def locate_supply_nodes(self, distance, num_supply_nodes, session):
         """
