@@ -509,12 +509,16 @@ def remove_phase(request):
         raise HTTPBadRequest('Unable to remove a root phase, remove the scenario instead')
 
     # get all phases that descend from this phase
+    phases = phase.get_descendents_query().distinct().order_by(Phase.id.desc())
+
+    """
     phases = session.query(Phase).filter(
             (Phase.scenario_id == phase.scenario_id) &
             (Phase.id == PhaseAncestor.phase_id) &
             (PhaseAncestor.ancestor_phase_id == phase.id) &
             (PhaseAncestor.scenario_id == phase.scenario_id)).distinct().\
                     order_by(Phase.id.desc())
+    """
 
     # needed for referring to parent phase upon return
     scenario_id  = phase.scenario_id
