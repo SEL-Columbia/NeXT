@@ -139,7 +139,6 @@ var load_page = function  (options) {
     map.addLayer(gphy);
     map.addLayer(demand_nodes);
     map.addLayer(supply_nodes);
-    map.addLayer(supply_nodes);
     if (options.add_phase_supply) {
       map.addLayer(phase_supply_nodes);
     }

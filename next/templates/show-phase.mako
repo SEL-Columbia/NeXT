@@ -35,7 +35,7 @@
   
   <script 
      type="text/javascript" 
-     src="${request.application_url}/static/show_phase.js">
+     src="${request.application_url}/static/show_phase.js?ver=1">
   </script>
   <script 
      type="text/javascript" 
