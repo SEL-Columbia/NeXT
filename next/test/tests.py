@@ -21,7 +21,9 @@ def _initTestingDB():
 def _initTestData(session):
     """
     Initialize Test Scenario with 2 demand nodes and 2 supply_nodes
-    Assumes Reference Data (i.e. NodeTypes) are loaded
+    Assumes:
+    - Reference Data (i.e. NodeTypes) are loaded 
+    - Database functions/triggers are loaded
     """ 
     from next.model.models import Scenario, Phase, Node, get_node_type, BASE_SRID
     scenario = Scenario("Test")
@@ -418,6 +420,68 @@ class TestMyView(unittest.TestCase):
         self.assertEqual(10, get_cumulative_nodes(scen1.id, phase1.id).count()) 
         self.assertEqual(20, get_cumulative_nodes(scen2.id, phase2.id).count()) 
 
+
+    def test_delete_phase(self):
+        """
+        This test is pretty comprehensive (may get promoted to top level test)
+        1. Add 1 new phase with 100 nodes
+        2. To this add another phase via "create_supply_nodes"
+        3. delete the phase created in step 1
+        4. Test whether it and its child are deleted
+        """
+        from next.model.models import Scenario, Phase, Node, Edge, PhaseAncestor
+        from next.views import create_edges, create_supply_nodes, remove_phase
+        scen1 = self.session.query(Scenario).filter(Scenario.name == "Test").first()
+        phase1 = self.session.query(Phase).filter(Phase.scenario_id == scen1.id).first()
+        parent_phase = Phase(scen1, phase1)
+        self.session.add_all([scen1, parent_phase])
+        demand_nodes = nodes_along_latitude(100, parent_phase, self.session, 
+                node_type='demand',
+                y_val=0.0, x_origin=0.0, x_spacing=0.1)
+        supply_nodes = nodes_along_latitude(5, parent_phase, self.session, 
+                node_type='supply',
+                y_val=0.0, x_origin=0.0, x_spacing=2.0)
+        self.session.add_all(demand_nodes)
+        self.session.add_all(supply_nodes)
+
+        # flush to assign ids
+        self.session.flush()
+
+        # add the edges for the parent phase 
+        request = testing.DummyRequest()
+        params = {'id': scen1.id, 'phase_id': parent_phase.id}
+        request.matchdict = params
+        #create the edges
+        create_edges(request)
+
+        # build the request to auto create_supply_nodes
+        # NOTE: this uses the previously set matchdict with
+        # scenario_id/phase_id params 
+        request.json_body = {'d': 1000, 'n': 10} 
+        response = create_supply_nodes(request)
+        
+        # Get the new phase (to test that it was created)
+        # TODO:  QUERY HERE
+        child_phase = parent_phase.get_descendents_query().filter(
+                Phase.id != parent_phase.id).order_by(Phase.id).first()
+
+        descendent_ids = [p.id for p in parent_phase.get_descendents_query()]
+        self.assertTrue(len(descendent_ids) == 2)
+        self.assertTrue(child_phase.id > parent_phase.id)
+        self.assertTrue(child_phase.get_nodes_query().count() == 10)
+
+        # remove the parent phase (params remain the same)
+        response = remove_phase(request)
+
+        # Check whether all nodes, edges, phases, ancestors associated with
+        # both phases have been deleted
+        
+        self.assertTrue(self.session.query(Node).filter((Node.scenario_id == scen1.id) & (Node.phase_id.in_(descendent_ids))).count() == 0)
+        self.assertTrue(self.session.query(Edge).filter((Edge.scenario_id == scen1.id) & (Edge.phase_id.in_(descendent_ids))).count() == 0)
+        self.assertTrue(self.session.query(Phase).filter((Phase.scenario_id == scen1.id) & (Phase.id.in_(descendent_ids))).count() == 0)
+        self.assertTrue(self.session.query(PhaseAncestor).filter((PhaseAncestor.scenario_id == scen1.id) & (PhaseAncestor.phase_id.in_(descendent_ids))).count() == 0)
+        # ensure that no phases reference these deleted phases too
+        self.assertTrue(self.session.query(PhaseAncestor).filter((PhaseAncestor.scenario_id == scen1.id) & (PhaseAncestor.ancestor_phase_id.in_(descendent_ids))).count() == 0)
         
 
 class TestDatabase(unittest.TestCase):
