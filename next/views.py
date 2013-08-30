@@ -390,7 +390,8 @@ def show_cumulative_phase_demand_json(phase):
 def graph_phase(request):
     session = DBSession()
     phase = get_object_or_404(Phase, request, ('phase_id', 'id'))
-    return json_response(map(list, phase.get_demand_vs_distance(num_partitions=20)))
+    return json_response(map(list, 
+        phase.get_demand_vs_distance_histogram(num_partitions=20)))
 
 
 @view_config(route_name='graph-phase-cumul')
@@ -398,7 +399,7 @@ def graph_phase_cumul(request):
     session = DBSession()
     phase = get_object_or_404(Phase, request, ('phase_id', 'id'))
     return json_response(map(list, 
-        phase.get_partitioned_demand_vs_dist(num_partitions=100)))
+        phase.get_demand_vs_distance_cumulative_histogram(num_partitions=100)))
 
 
 @view_config(route_name='show-phase', renderer='show-phase.mako')

@@ -21,6 +21,7 @@ import shapely
 from . import Base, DBSession
 
 BASE_SRID = 4326
+WEB_SRID = 900913
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +53,7 @@ class Scenario(Base):
     def __repr__(self):
         return '#<Scenario %s,%s>' % (self.name, self.id)
 
-    def get_bounds(self, srid=900913):
+    def get_bounds(self, srid=WEB_SRID):
         """
         Method to find the bound box for a scenario (based on all of
         its underlying nodes)
@@ -73,6 +74,9 @@ class Scenario(Base):
 
 
     def get_root_phase(self):
+        """
+        Each scenario has a single root phase (Phase.id == 1), return it
+        """
         session = DBSession()
         phase = session.query(Phase).\
                 filter((Phase.scenario_id == self.id) & (Phase.id == 1)).first()
@@ -80,7 +84,7 @@ class Scenario(Base):
 
 
     def to_geojson(self):
-        bounds = self.get_bounds(srid=4326)
+        bounds = self.get_bounds(srid=BASE_SRID)
         coords = []
         if (bounds):
             if (isinstance(bounds, shapely.geometry.Point)):
@@ -168,7 +172,7 @@ class Phase(Base):
         """
         return (self.id == 1)
 
-    def get_bounds(self, srid=900913):
+    def get_bounds(self, srid=WEB_SRID):
         """
         Method to find the bounding box for a phase (based on all of
         its underlying nodes and those of its ancestors)
@@ -192,7 +196,7 @@ class Phase(Base):
 
 
     def to_geojson(self):
-        bounds = self.get_bounds(srid=4326)
+        bounds = self.get_bounds(srid=BASE_SRID)
         coords = []
         if (bounds):
             if (isinstance(bounds, shapely.geometry.Point)):
@@ -210,8 +214,10 @@ class Phase(Base):
 
     def create_edges(self):
         """
-        Clear out any existing edges and run nearest neighbor to
-        associate demand nodes with their nearest supply.
+        Run nearest neighbor to associate demand nodes with their nearest 
+        supply node for all ancestral nodes in this phase.
+
+        This clears any existing edges for this phase first.
         """
         session = DBSession()
         conn = session.connection()
@@ -226,7 +232,13 @@ class Phase(Base):
             phase_id=self.id)
 
 
-    def get_demand_vs_distance(self, num_partitions=5):
+    def get_demand_vs_distance_histogram(self, num_partitions=5):
+        """
+        Calculate a histogram and return it as a collection of 
+        distance (meters), percentage of demand tuples
+
+        num_partitions -- the number of distance intervals
+        """
         session = DBSession()
         conn = session.connection()
         sql = text(
@@ -239,12 +251,20 @@ class Phase(Base):
                 sc_id=self.scenario_id,
                 phase_id=self.id,
                 num_parts=num_partitions)
+
         return rset
 
 
-    def get_partitioned_demand_vs_dist(self, num_partitions=5):
-        # This function is only valid when there are edges
-        # and the distance between the max/min is > 0
+    def get_demand_vs_distance_cumulative_histogram(self, num_partitions=5):
+        """
+        Calculate a *cumulative* histogram and return it as a collection of 
+        distance (meters), percentage of demand tuples
+
+        num_partitions -- the number of distance intervals
+        
+        Note:  This function is only valid when there are edges and
+        the spread of the distances is > 0
+        """
         session = DBSession()
         conn = session.connection()
         sql = text(
@@ -263,6 +283,9 @@ class Phase(Base):
     def get_demand_nodes_outside_distance(self, distance):
         """
         Get the demand nodes that are further than distance from their associated supply.
+        returns a query object
+
+        distance -- the distance (meters)
         """
 
         qu = get_cumulative_nodes(self.scenario_id, self.id, node_type='demand')
