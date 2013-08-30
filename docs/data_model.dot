@@ -1,0 +1,11 @@
+digraph next {
+  scenarios -> phases [arrowhead=crow];
+  phases    -> edges  [label="nearest neighbors", arrowhead=crow];
+  phases    -> nodes  [label="unique per phase", arrowhead=crow];
+  edges     -> nodes  [label="demand (to)", arrowhead=crow];
+  edges     -> nodes  [label="supply (from)", arrowhead=crow];
+  scenarios [shape=box];
+  phases [shape=box];
+  edges [shape=box];
+  nodes [shape=box];
+}
