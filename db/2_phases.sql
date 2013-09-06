@@ -6,7 +6,7 @@ CREATE OR REPLACE FUNCTION tgr_phase_id() RETURNS TRIGGER AS $$
     BEGIN
         IF TG_OP = 'INSERT' THEN
             -- Set ID to (count of all phases for THIS scenario) + 1
-            NEW.id := max(id)+1 from phases where scenario_id=NEW.scenario_id;
+            NEW.id := coalesce(max(id),0)+1 from phases where scenario_id=NEW.scenario_id;
         END IF;
         RETURN NEW;
     END;
