@@ -9,18 +9,12 @@ html, body {
   padding: 20px;
 } 
 
-
-#region-map { 
-    height: 500px;
-    width: 100%;
-    background: #eee;
-} 
-
 form label { 
   padding: 5px;
 }
 
 #scenario-map { 
+    width: 100%;
     background: #eee;
 } 
 
@@ -38,4 +32,16 @@ form label {
 
 .olControlMousePosition {
     top: 10px;
+}
+
+/* added to make site look somewhat consistent under bootstrap 3 */
+[class*="span"]{float:left;margin-left:20px;}
+
+div.span2 {
+    font-size: 13px;
+    width: 100px;
+}
+
+ul.nav {
+    margin-bottom: 18px;
 }

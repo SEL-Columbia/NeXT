@@ -26,7 +26,7 @@
   </fieldset>
   
   <input 
-     class="btn primary"
+     class="btn btn-default"
      type="submit" 
      name="" 
      value="Upload and run scenario" />

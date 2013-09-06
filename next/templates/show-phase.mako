@@ -23,10 +23,13 @@
      src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.16/jquery-ui.js">
   </script>
 
+  <!--
   <script 
      type="text/javascript" 
      src="${request.application_url}/static/bootstrap/bootstrap-tab.js">
   </script>
+  -->
+  <script src="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
 
   <script 
      type="text/javascript" 
@@ -106,7 +109,7 @@
 <div class="content" style="position:absolute;width:120px;top:60px;left:20px;background-color:#fff;z-index:99;overflow:auto;">  
   <div class="row" style="margin:1px;">
   <h3>Phases</h3>
-  <ul class="nav nav-list">
+  <ul class="nav nav-pills nav-stacked">
   <%
     for row in phase_tree_rows:
         row_space = '&nbsp;&nbsp;' * row['cols']
@@ -138,25 +141,25 @@
   	  <label for="supply_distance">Distance (meters)</label>
           </div>
           <div class="span2">
-  	  <input type="text" name="supply_distance" id="supply_distance" value="1000" maxlength="10" style="width:60px"/>
+  	  <input type="text" class="form-control" name="supply_distance" id="supply_distance" value="1000" maxlength="10" style="width:80px"/>
           </div>
           <div class="span2">
   	  <label for="num_supply_nodes">Number of Facilities</label>
           </div>
           <div class="span2">
-  	  <input type="text" name="num_supply_nodes" id="num_supply_nodes" value="1" maxlength="5" style="width:40px"/>
+  	  <input type="text" class="form-control" name="num_supply_nodes" id="num_supply_nodes" value="1" maxlength="5" style="width:40px"/>
           </div>
           <div class="span3">
-          <a href="#" class="btn" id="auto-add-supply-nodes">Add</a> 
+          <a href="#" class="btn btn-default" id="auto-add-supply-nodes">Add</a> 
           </div>
           </div>
          </form>
       </div>
       <div class="tab-pane" id="manual">
       <!-- <div class="span7"> -->
-        <a href="#" class="btn" id="add-supply-node">Add</a>
-        <a class="btn" id="stop-editing" href="#" style="display:none">Finish</a>
-        <a id="add-nodes-to-new-phase" class="btn disabled" href="#">Add Nodes to New Phase</a>
+        <a href="#" class="btn btn-default" id="add-supply-node">Add</a>
+        <a class="btn btn-default" id="stop-editing" href="#" style="display:none">Finish</a>
+        <a id="add-nodes-to-new-phase" class="btn btn-default disabled" href="#">Add Nodes to New Phase</a>
         <!--
         <span id="number-features" 
               class="alert-message success
@@ -178,7 +181,7 @@
       <br />
         <fieldset>
           <label style="block">Percent population within (meters)</label>
-          <input id="distance" type="text" name="distance" value="1000" />
+          <input id="distance" class="form-control" type="text" name="distance" value="1000" />
         </fieldset>
       <h2 id="percent"></h2>
     </div>

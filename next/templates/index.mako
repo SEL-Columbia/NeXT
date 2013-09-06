@@ -5,7 +5,7 @@
 
 <%def name="body()">
 
-<a class="btn" href="${request.route_url('create-scenario')}">Create new scenario</a>
+<a class="btn btn-default" href="${request.route_url('create-scenario')}">Create new scenario</a>
 <h3>Existing Scenarios</h3>
 
 <div class="row">
@@ -18,7 +18,7 @@
           <th>Name</th>
           <th>Node count</th>
           <th>Phase count</th>
-          <th><button class="btn" type="submit">Delete</button></th>
+          <th><button type="submit">Delete</button></th>
         </tr>
       </thead>
       <tbody>
