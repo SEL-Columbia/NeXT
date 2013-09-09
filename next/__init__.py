@@ -18,7 +18,6 @@ def main(global_config, **settings):
     config.add_route('create-scenario', '/scenarios/create')
     config.add_route('remove-scenarios', '/scenarios/remove')
 
-    config.add_route('show-scenario', '/scenarios/{id}')
     config.add_route('create-phase', '/scenarios/{id}/phases/{phase_id}/create')
     config.add_route('remove-phase', '/scenarios/{id}/phases/{phase_id}/remove')
     config.add_route('show-phase', '/scenarios/{id}/phases/{phase_id}')
