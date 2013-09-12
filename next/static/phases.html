@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <title>Test Page</title>
+        <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css">    
+        <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-theme.min.css">    
+        <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.6.4/leaflet.css" />
+        <!--[if lte IE 8]>
+        <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.6.4/leaflet.ie.css" />
+        <![endif]-->
+        <style>
+            html, body {
+                height:100%;
+                width:100%;
+                padding:0px;
+                margin:0px;
+            } 
+            div.content { 
+                padding:0px;
+                max-width: none;
+                height: 100%; 
+            }
+        </style>
+        <script 
+            type="text/javascript"
+            src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.js">
+        </script>
+        <script 
+            type="text/javascript"
+            src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.16/jquery-ui.js">
+        </script>
+        <script type="text/javascript" src="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+
+        <script src="http://cdn.leafletjs.com/leaflet-0.6.4/leaflet.js"></script>
+        <script language="javascript">
+
+            function resize_map(has_sidebar) {
+                if (has_sidebar) {
+                    $('#phase-map').width($('#phase-map').parent().width() - $('#sidebar').outerWidth());
+                } 
+                else {
+                    $('#phase-map').width($('#phase-map').parent().width());
+                }
+            }
+
+            $(function() {
+                
+                var map = new L.Map('phase-map');                       
+
+                L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© <a href="http://openstreetmap.org">OpenStreetMap</a> contributors',
+                    maxZoom: 18
+                }).addTo(map);
+                map.attributionControl.setPrefix(''); // Don't show the 'Powered by Leaflet' text.
+
+                var london = new L.LatLng(51.505, -0.09); 
+                map.setView(london, 13);
+                //setup the map
+                resize_map(false);
+                map.invalidateSize(false);
+                
+                $('#close-bar').click(function() {
+                    $('#sidebar').hide();
+                    resize_map(false);
+                    map.invalidateSize(false);
+                });
+
+                $('#plan').click(function() {
+                    //close all sidebar-items
+                    $('.sidebar-item').hide();
+                    $('#sidebar').show();
+                    $('#plan-bar').show();
+                    resize_map(true);
+                    map.invalidateSize(false);
+                });
+
+                $('#analyze').click(function() {
+                    //close all sidebar-items
+                    $('.sidebar-item').hide();
+                    $('#sidebar').show();
+                    $('#analyze-bar').show();
+                    resize_map(true);
+                    map.invalidateSize(false);
+                });
+
+                /* old
+                $('#analyze').click(function() {
+                    if ($('#sidebar').is(":hidden")) {
+                        $('#sidebar').show();
+                        resize_map(true);
+                    } else {
+                        $('#sidebar').hide();
+                        resize_map(false);
+                    }
+                    map.invalidateSize(false);
+                });
+                */
+            });
+
+        </script>
+    </head>
+    <body>
+        <!-- Fixed navbar -->
+        <div class="navbar navbar-default" style="margin-bottom: 0px;">
+            <div class="container">
+                <div class="navbar-header">
+                    <a class="navbar-brand" href="./scenarios.html">SpatialPlanner</a>
+                </div>
+                <div class="navbar-collapse collapse">
+                    <ul class="nav navbar-nav">
+                        <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">Phases<b class="caret"></b></a>
+                        <ul class="dropdown-menu" role="menu">
+                            <li role='presentation' class="active"><a role='menuitem' href='http://192.168.33.50:6543/scenarios/15/phases/1'>1</a></li>
+                            <li role='presentation'><a role='menuitem' href='http://192.168.33.50:6543/scenarios/15/phases/2'>2</a></li>
+                            <li role='presentation'><a role='menuitem' href='http://192.168.33.50:6543/scenarios/15/phases/3'>3</a></li>
+                        </ul>
+                        </li>
+                    </ul>
+                    <ul class="nav navbar-nav navbar-right">
+                        <li><a href="#" id="analyze">Analyze</a></li>
+                        <li><a href="#" id="plan">Plan</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="content">
+            <div id="phase-map" style="height: 100%;float: left;"></div>
+            <div id="sidebar" style="height: 100%;width: 300px;float: right;padding: 10px;">
+                <a href="#" id="close-bar">Close</a>
+                <div class="sidebar-item" id="analyze-bar" style="width: 270px;">
+                    <div>
+                        <br />
+                        <fieldset>
+                            <label style="block">Percent population within (meters)</label>
+                            <input id="distance" class="form-control" type="text" name="distance" value="1000" />
+                        </fieldset>
+                        <h2 id="percent"></h2>
+                    </div>
+                    <div id="holder" style="width: 270px;"></div>
+                </div>
+                <div class="sidebar-item" id="plan-bar" style="width: 270px;padding: 10px;">
+                    <ul class="nav nav-tabs">
+                        <li class="active"><a href="#auto" data-toggle="tab">Auto</a></li>
+                        <li><a href="#manual" data-toggle="tab">Manual</a></li>
+                    </ul>
+                    <div class="tab-content">
+                        <div class="tab-pane active" id="auto">
+                            <form>
+                                <div class="row">
+                                    <div class="span2">
+                                        <label for="supply_distance">Distance (meters)</label>
+                                    </div>
+                                    <div class="span2">
+                                        <input type="text" class="form-control" name="supply_distance" id="supply_distance" value="1000" maxlength="10" style="width:80px"/>
+                                    </div>
+                                    <div class="span2">
+                                        <label for="num_supply_nodes">Number of Facilities</label>
+                                    </div>
+                                    <div class="span2">
+                                        <input type="text" class="form-control" name="num_supply_nodes" id="num_supply_nodes" value="1" maxlength="5" style="width:40px"/>
+                                    </div>
+                                    <div class="span3">
+                                        <a href="#" class="btn btn-default" id="auto-add-supply-nodes">Add</a> 
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="tab-pane" id="manual">
+                            <a href="#" class="btn btn-default" id="add-supply-node">Add</a>
+                            <a class="btn btn-default" id="stop-editing" href="#" style="display:none">Finish</a>
+                            <a id="add-nodes-to-new-phase" class="btn btn-default disabled" href="#">Add Nodes to New Phase</a>
+                            <!--
+                            <span id="number-features" 
+                                class="alert-message success
+                                block-message">
+                            </span>      
+                            -->
+                        </div>
+                    </div>
+                </div> 
+            </div>
+        </div>
+</body>
+</html>
