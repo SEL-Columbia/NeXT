@@ -118,12 +118,12 @@ General Guidelines:
 5. show-nodes(list): route='/scenarios/:id/phases/:id/nodes', request_method='GET'
 
    params:
-       type:  node type as string (i.e. "demand_node" or "service_node")
+       type:  node type as string (i.e. "demand" or "supply")
        cumulative=TRUE:     cumulative, or just this phases's info? default = cumulative.
 
    returns:  list of node geojson representations (media-type=json)
 
-6. show-edges: route='/scenarios/:id/phases/"id/', request_method='GET'
+6. show-edges: route='/scenarios/:id/phases/:id/', request_method='GET'
 
    params:
        cumulative=TRUE:     cumulative, or just this phases's info? default = cumulative.
